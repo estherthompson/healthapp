@@ -1,6 +1,6 @@
 /**
- * Health Insights – React Native (iOS + Android)
- * Phase 1: Health data (steps). Phase 2: AI chatbot.
+ * BloomAi – React Native (iOS + Android)
+ * Health data, period tracking, chat, food diary.
  */
 
 import React from 'react';
@@ -8,9 +8,11 @@ import { StatusBar, Image, ImageSourcePropType } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { ChatScreen } from './src/screens/ChatScreen';
 import { FoodDiaryScreen } from './src/screens/FoodDiaryScreen';
+import { PeriodScreen } from './src/screens/PeriodScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -53,7 +55,7 @@ function App() {
             name="Home"
             component={HomeScreen}
             options={{
-              title: 'Health Insights',
+              headerShown: false,
               tabBarLabel: 'Home',
               tabBarIcon: ({ color }) => <TabBarImageIcon source={tabIcons.home} tintColor={color} />,
             }}
@@ -74,6 +76,22 @@ function App() {
               title: 'Food Diary',
               tabBarLabel: 'Food',
               tabBarIcon: ({ color }) => <TabBarImageIcon source={tabIcons.dish} tintColor={color} />,
+            }}
+          />
+          <Tab.Screen
+            name="Period"
+            component={PeriodScreen}
+            options={{
+              title: 'Period',
+              tabBarLabel: 'Period',
+              tabBarIcon: ({ color }) => (
+                <Ionicons
+                  name="water-outline"
+                  size={TAB_ICON_SIZE}
+                  color={color}
+                  style={{ opacity: color === '#292524' ? 1 : 0.5 }}
+                />
+              ),
             }}
           />
         </Tab.Navigator>

@@ -1,6 +1,6 @@
-# Health Insights App (React Native)
+# BloomAi (React Native)
 
-iOS + Android app for the Health Insights project: read health data (steps) and, in Phase 2, chat with an AI for wellness insights.
+iOS + Android app: health data (steps, period, and more), period tracking, and in Phase 2, chat with an AI for wellness insights.
 
 ## Stack
 
@@ -19,6 +19,26 @@ iOS + Android app for the Health Insights project: read health data (steps) and,
 ## How to run this application
 
 All commands below are run from the **repo root** (the folder that contains `HealthInsightsApp`), unless noted.
+
+### Connect to Metro (required for the app to load)
+
+If the app shows **"Connect to Metro to develop JavaScript"** or a red error screen, the JavaScript bundler is not running. Start it and leave it running in a separate terminal:
+
+```bash
+cd HealthInsightsApp
+npm start
+```
+
+Keep that terminal open. Then run the app from Xcode or `npm run ios` / `npm run android`. The app will connect to Metro and load your code.
+
+### Do I need to rebuild every time?
+
+**No.** For most changes (UI, screens, JavaScript/TypeScript, gradient colors, new components), you only need to **reload** the app: press **`r`** in the Metro terminal, or shake the device and tap **Reload**. The app fetches the latest JS from Metro.
+
+**Rebuild** (run from Xcode or `npm run ios` / `npm run android` again) only when you:
+- Add or remove a native dependency (e.g. a new npm package with native code)
+- Change iOS/Android project settings (e.g. entitlements, Info.plist, AndroidManifest)
+- Change native code (Swift, Kotlin, etc.)
 
 ### 1. Install JavaScript dependencies
 
@@ -105,6 +125,19 @@ The HealthKit entitlement is already in the project; you only need to set your t
 
 - Request health permission (HealthKit on iOS, Health Connect on Android)
 - Show today’s step count and refresh
+- Aurora-style gradient UI (purples, pinks, blues, greens)
+
+## What can we track? (Steps is not the only thing)
+
+Right now the app only reads **steps**. Both platforms support many more metrics; we can add them in Phase 2 or 3:
+
+**iOS (HealthKit)**  
+Steps, distance (walking/running), active energy, resting energy, heart rate, heart rate variability, sleep analysis, workouts (type, duration, calories), flights climbed, oxygen saturation, weight, mindful minutes, and 100+ other quantity/category types.
+
+**Android (Health Connect)**  
+Steps, distance, active/total calories burned, heart rate, sleep sessions, exercise sessions, weight, height, blood pressure, blood glucose, hydration, and more. Each type needs the right permission in `AndroidManifest.xml` and a corresponding read in the health service.
+
+Adding a new metric means: (1) request the right permission, (2) read/aggregate that type in `healthService.ios.ts` and `healthService.android.ts`, (3) expose it in the summary for the chatbot.
 
 ## Phase 2 (next)
 

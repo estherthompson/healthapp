@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>HealthInsightsApp</string>
+	<string>BloomAi</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -34,9 +34,9 @@
 		<true/>
 	</dict>
 	<key>NSHealthShareUsageDescription</key>
-	<string>Health Insights uses your step count to show activity and provide wellness insights.</string>
+	<string>BloomAi uses your health data (steps, distance, activity, sleep, heart rate, and more) to show activity and provide wellness insights.</string>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string>Health Insights uses your health data to provide personalized wellness insights.</string>
+	<string>BloomAi uses your health data to provide personalized wellness insights.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
 	<key>RCTNewArchEnabled</key>

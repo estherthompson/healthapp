@@ -21,3 +21,33 @@ export const getTodayStepCount =
   Platform.OS === 'ios'
     ? require('./healthService.ios').getTodayStepCount
     : require('./healthService.android').getTodayStepCount;
+
+export const getTodayDistanceKm =
+  Platform.OS === 'ios'
+    ? require('./healthService.ios').getTodayDistanceKm
+    : require('./healthService.android').getTodayDistanceKm;
+
+export const getTodayActiveEnergyKcal =
+  Platform.OS === 'ios'
+    ? require('./healthService.ios').getTodayActiveEnergyKcal
+    : require('./healthService.android').getTodayActiveEnergyKcal;
+
+export const getTodayFlightsClimbed =
+  Platform.OS === 'ios'
+    ? require('./healthService.ios').getTodayFlightsClimbed
+    : require('./healthService.android').getTodayFlightsClimbed;
+
+export const getTodayExerciseMinutes =
+  Platform.OS === 'ios'
+    ? require('./healthService.ios').getTodayExerciseMinutes
+    : require('./healthService.android').getTodayExerciseMinutes;
+
+export const getTodaySleepMinutes =
+  Platform.OS === 'ios'
+    ? require('./healthService.ios').getTodaySleepMinutes
+    : require('./healthService.android').getTodaySleepMinutes;
+
+export const getRestingHeartRateBpm =
+  Platform.OS === 'ios'
+    ? require('./healthService.ios').getRestingHeartRateBpm
+    : require('./healthService.android').getRestingHeartRateBpm;
