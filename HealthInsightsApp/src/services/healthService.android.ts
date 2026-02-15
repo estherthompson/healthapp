@@ -61,7 +61,7 @@ export async function requestPermissions(): Promise<HealthStatus> {
   try {
     const inited = await initialize();
     if (!inited) return 'not_available';
-    await requestPermission(PERMISSIONS);
+    await requestPermission(PERMISSIONS as any);
     const granted = await getGrantedPermissions();
     const hasSteps = hasPermission(granted, 'Steps');
     return hasSteps ? 'authorized' : 'denied';
@@ -82,7 +82,7 @@ export async function getTodayStepCount(): Promise<number> {
     });
     const count = (result as { COUNT_TOTAL?: number }).COUNT_TOTAL;
     return count ?? 0;
-  } catch (_) {
+  } catch {
     return 0;
   }
 }
@@ -99,7 +99,7 @@ export async function getTodayDistanceKm(): Promise<number> {
     });
     const dist = (result as { DISTANCE?: { inKilometers: number } }).DISTANCE;
     if (dist?.inKilometers != null) return Math.round(dist.inKilometers * 100) / 100;
-  } catch (_) {}
+  } catch {}
   return 0;
 }
 
@@ -116,7 +116,7 @@ export async function getTodayActiveEnergyKcal(): Promise<number> {
     const energy = (result as { ACTIVE_CALORIES_TOTAL?: { inKilocalories: number } })
       .ACTIVE_CALORIES_TOTAL;
     if (energy?.inKilocalories != null) return Math.round(energy.inKilocalories);
-  } catch (_) {}
+  } catch {}
   return 0;
 }
 
@@ -132,7 +132,7 @@ export async function getTodayFlightsClimbed(): Promise<number> {
     });
     const total = (result as { FLOORS_CLIMBED_TOTAL?: number }).FLOORS_CLIMBED_TOTAL;
     return total != null ? Math.round(total) : 0;
-  } catch (_) {}
+  } catch {}
   return 0;
 }
 
@@ -149,7 +149,7 @@ export async function getTodayExerciseMinutes(): Promise<number> {
     const duration = (result as { EXERCISE_DURATION_TOTAL?: { inSeconds: number } })
       .EXERCISE_DURATION_TOTAL;
     if (duration?.inSeconds != null) return Math.round(duration.inSeconds / 60);
-  } catch (_) {}
+  } catch {}
   return 0;
 }
 
@@ -165,7 +165,7 @@ export async function getTodaySleepMinutes(): Promise<number> {
     });
     const total = (result as { SLEEP_DURATION_TOTAL?: number }).SLEEP_DURATION_TOTAL;
     if (total != null) return Math.round(total / 60);
-  } catch (_) {}
+  } catch {}
   return 0;
 }
 
@@ -181,6 +181,6 @@ export async function getRestingHeartRateBpm(): Promise<number | null> {
     });
     const avg = (result as { BPM_AVG?: number }).BPM_AVG;
     if (avg != null) return Math.round(avg);
-  } catch (_) {}
+  } catch {}
   return null;
 }

@@ -1,10 +1,11 @@
 /**
  * BloomAi – React Native (iOS + Android)
- * Health data, period tracking, chat, food diary.
+ * Health data, profile, chat, food diary.
  */
 
-import React from 'react';
-import { StatusBar, Image, ImageSourcePropType } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StatusBar, Image, ImageSourcePropType, StyleSheet, View, ActivityIndicator, Text } from 'react-native';
+import { loadProfileStore } from './src/storage/profileStore';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -12,7 +13,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { ChatScreen } from './src/screens/ChatScreen';
 import { FoodDiaryScreen } from './src/screens/FoodDiaryScreen';
-import { PeriodScreen } from './src/screens/PeriodScreen';
+import { ProfileScreen } from './src/screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -23,17 +24,61 @@ const tabIcons = {
   dish: require('./assets/icons/dish.png'),
 };
 
+const styles = StyleSheet.create({
+  tabIcon: { width: TAB_ICON_SIZE, height: TAB_ICON_SIZE },
+  tabIconActive: { opacity: 1 },
+  tabIconInactive: { opacity: 0.5 },
+});
+
 function TabBarImageIcon({ source, tintColor }: { source: ImageSourcePropType; tintColor: string }) {
+  const opacityStyle = tintColor === '#292524' ? styles.tabIconActive : styles.tabIconInactive;
   return (
     <Image
       source={source}
-      style={{ width: TAB_ICON_SIZE, height: TAB_ICON_SIZE, opacity: tintColor === '#292524' ? 1 : 0.5 }}
+      style={[styles.tabIcon, opacityStyle]}
       resizeMode="contain"
     />
   );
 }
 
+function HomeTabIcon({ color }: { color: string }) {
+  return <TabBarImageIcon source={tabIcons.home} tintColor={color} />;
+}
+function ChatTabIcon({ color }: { color: string }) {
+  return <TabBarImageIcon source={tabIcons.agents} tintColor={color} />;
+}
+function FoodTabIcon({ color }: { color: string }) {
+  return <TabBarImageIcon source={tabIcons.dish} tintColor={color} />;
+}
+function ProfileTabIcon({ color }: { color: string }) {
+  return (
+    <Ionicons
+      name="person-circle-outline"
+      size={TAB_ICON_SIZE}
+      color={color}
+      style={color === '#292524' ? styles.tabIconActive : styles.tabIconInactive}
+    />
+  );
+}
+
 function App() {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    loadProfileStore().then(() => setReady(true));
+  }, []);
+
+  if (!ready) {
+    return (
+      <SafeAreaProvider>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fef08a' }}>
+          <ActivityIndicator size="large" color="#292524" />
+          <Text style={{ marginTop: 12, color: '#292524', fontSize: 14 }}>Loading…</Text>
+        </View>
+      </SafeAreaProvider>
+    );
+  }
+
   return (
     <SafeAreaProvider>
       <StatusBar barStyle="dark-content" />
@@ -57,7 +102,7 @@ function App() {
             options={{
               headerShown: false,
               tabBarLabel: 'Home',
-              tabBarIcon: ({ color }) => <TabBarImageIcon source={tabIcons.home} tintColor={color} />,
+              tabBarIcon: HomeTabIcon,
             }}
           />
           <Tab.Screen
@@ -66,7 +111,7 @@ function App() {
             options={{
               title: 'Wellness Chat',
               tabBarLabel: 'Chat',
-              tabBarIcon: ({ color }) => <TabBarImageIcon source={tabIcons.agents} tintColor={color} />,
+              tabBarIcon: ChatTabIcon,
             }}
           />
           <Tab.Screen
@@ -75,23 +120,16 @@ function App() {
             options={{
               title: 'Food Diary',
               tabBarLabel: 'Food',
-              tabBarIcon: ({ color }) => <TabBarImageIcon source={tabIcons.dish} tintColor={color} />,
+              tabBarIcon: FoodTabIcon,
             }}
           />
           <Tab.Screen
-            name="Period"
-            component={PeriodScreen}
+            name="Profile"
+            component={ProfileScreen}
             options={{
-              title: 'Period',
-              tabBarLabel: 'Period',
-              tabBarIcon: ({ color }) => (
-                <Ionicons
-                  name="water-outline"
-                  size={TAB_ICON_SIZE}
-                  color={color}
-                  style={{ opacity: color === '#292524' ? 1 : 0.5 }}
-                />
-              ),
+              title: 'Profile',
+              tabBarLabel: 'Profile',
+              tabBarIcon: ProfileTabIcon,
             }}
           />
         </Tab.Navigator>

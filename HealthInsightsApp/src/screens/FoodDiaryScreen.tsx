@@ -59,9 +59,6 @@ function flattenDishes(data: LogMealDishesResponse): LogMealDishItem[] {
   return out;
 }
 
-/**
- * Food Diary – today's log by meal (Breakfast, Lunch, Dinner, Snacks). Add via scan or search.
- */
 const EMPTY_BY_MEAL: Record<MealType, FoodLogEntry[]> = {
   breakfast: [],
   lunch: [],
@@ -119,22 +116,6 @@ export function FoodDiaryScreen() {
     }
   }, [data]);
 
-  const showAddOptions = useCallback((meal: MealType) => {
-    Alert.alert('Add to ' + meal, 'How do you want to add food?', [
-      { text: 'Scan meal', onPress: () => openScanThenChooseMeal(meal) },
-      { text: 'Search dish', onPress: () => openSearchThenChooseMeal(meal) },
-      { text: 'Cancel', style: 'cancel' },
-    ]);
-  }, []);
-
-  const openScanThenChooseMeal = useCallback((meal: MealType) => {
-    Alert.alert('Scan meal', 'Take a photo or choose from gallery', [
-      { text: 'Take photo', onPress: () => runScanAndAddToMeal(meal, false) },
-      { text: 'Choose from gallery', onPress: () => runScanAndAddToMeal(meal, true) },
-      { text: 'Cancel', style: 'cancel' },
-    ]);
-  }, []);
-
   const runScanAndAddToMeal = useCallback(async (meal: MealType, fromLibrary: boolean = false) => {
     const launcher = fromLibrary ? launchImageLibrary : launchCamera;
     if (typeof launcher !== 'function') {
@@ -165,12 +146,28 @@ export function FoodDiaryScreen() {
     }
   }, [refreshLog]);
 
+  const openScanThenChooseMeal = useCallback((meal: MealType) => {
+    Alert.alert('Scan meal', 'Take a photo or choose from gallery', [
+      { text: 'Take photo', onPress: () => runScanAndAddToMeal(meal, false) },
+      { text: 'Choose from gallery', onPress: () => runScanAndAddToMeal(meal, true) },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  }, [runScanAndAddToMeal]);
+
   const openSearchThenChooseMeal = useCallback((meal: MealType) => {
     setAddToMeal(meal);
     setSearchModalVisible(true);
     setSearchQuery('');
     loadDishes();
   }, [loadDishes]);
+
+  const showAddOptions = useCallback((meal: MealType) => {
+    Alert.alert('Add to ' + meal, 'How do you want to add food?', [
+      { text: 'Scan meal', onPress: () => openScanThenChooseMeal(meal) },
+      { text: 'Search dish', onPress: () => openSearchThenChooseMeal(meal) },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  }, [openScanThenChooseMeal, openSearchThenChooseMeal]);
 
   const addDishToMeal = useCallback(async (meal: MealType, name: string, portion_g: number) => {
     await addEntry({ meal, name, portion_g });
@@ -268,7 +265,6 @@ export function FoodDiaryScreen() {
         <View style={styles.bottomPad} />
       </ScrollView>
 
-      {/* Search modal – pick a dish to add to a meal */}
       <Modal
         visible={searchModalVisible}
         animationType="slide"

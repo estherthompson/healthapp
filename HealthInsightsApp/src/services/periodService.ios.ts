@@ -23,7 +23,7 @@ export async function requestPeriodPermission(): Promise<boolean> {
     await requestAuthorization({
       toRead: [MENSTRUAL_TYPE],
       toWrite: [MENSTRUAL_TYPE],
-    });
+    } as any);
     return true;
   } catch {
     return false;
@@ -61,7 +61,7 @@ export async function logPeriod(
       value as any,
       dayStartDate,
       dayEndDate,
-      { HKMetadataKeyMenstrualCycleStart: isCycleStart }
+      { HKMetadataKeyMenstrualCycleStart: isCycleStart } as any
     );
     current.setDate(current.getDate() + 1);
   }

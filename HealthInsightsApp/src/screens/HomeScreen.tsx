@@ -85,7 +85,6 @@ export function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Bloom logo next to greeting + date */}
         <View style={styles.header}>
           <Image
             source={require('../../assets/images/bloom-logo.png')}
@@ -98,7 +97,6 @@ export function HomeScreen() {
           </View>
         </View>
 
-        {/* Compact status: pill or connect button */}
         <View style={styles.statusWrap}>
           {authorized ? (
             <View style={[styles.pill, styles.pillOk, styles.pillRow]}>
@@ -122,7 +120,6 @@ export function HomeScreen() {
           )}
         </View>
 
-        {/* Hero: Today's steps */}
         <View style={[styles.heroCard, styles.heroSteps]}>
           <Text style={styles.heroLabel}>Steps today</Text>
           <Text style={styles.heroValue}>{stepCount.toLocaleString()}</Text>
@@ -134,10 +131,8 @@ export function HomeScreen() {
           )}
         </View>
 
-        {/* Section label */}
         <Text style={styles.sectionTitle}>Today at a glance</Text>
 
-        {/* Metric cards row: Sleep, Distance, Heart */}
         <View style={styles.metricRow}>
           <View style={[styles.miniCard, styles.miniSleep]}>
             <Ionicons name="moon-outline" size={26} color="#92400e" style={styles.miniIcon} />
@@ -162,7 +157,6 @@ export function HomeScreen() {
           </View>
         </View>
 
-        {/* Activity details card */}
         <View style={styles.detailsCard}>
           <Text style={styles.detailsTitle}>Activity details</Text>
           <View style={styles.detailsGrid}>

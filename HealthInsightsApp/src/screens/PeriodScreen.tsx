@@ -81,7 +81,7 @@ export function PeriodScreen() {
       await loadEntries();
       setStartDate(todayStr());
       setEndDate(todayStr());
-    } catch (e) {
+    } catch {
       Alert.alert('Error', 'Could not save. Try again.');
     }
     setSaving(false);

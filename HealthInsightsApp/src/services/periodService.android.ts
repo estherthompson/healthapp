@@ -93,7 +93,7 @@ export async function getRecentPeriodEntries(limitDays: number = 90): Promise<Pe
         endTime: end.toISOString(),
       },
       limit: 500,
-    });
+    } as any);
     const records = (result as { records?: { time: string; flow?: number }[] }).records ?? [];
     const entries: PeriodEntry[] = records.map((r) => ({
       date: r.time.slice(0, 10),

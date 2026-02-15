@@ -68,7 +68,6 @@ async function querySum(
   identifier: string,
   unit?: string
 ): Promise<number> {
-  const { start, end } = getTodayRange();
   try {
     const result = await queryStatisticsForQuantity(
       identifier as any,
@@ -77,7 +76,7 @@ async function querySum(
     );
     const sum = result?.sumQuantity;
     if (sum?.quantity != null) return sum.quantity;
-  } catch (_) {}
+  } catch {}
   return 0;
 }
 
@@ -114,7 +113,6 @@ export async function getTodayExerciseMinutes(): Promise<number> {
 }
 
 export async function getTodaySleepMinutes(): Promise<number> {
-  const { start, end } = getTodayRange();
   try {
     const samples = await queryCategorySamples(
       'HKCategoryTypeIdentifierSleepAnalysis',
@@ -131,12 +129,11 @@ export async function getTodaySleepMinutes(): Promise<number> {
       totalMs += Math.max(0, endDate - startDate);
     }
     return Math.round(totalMs / 60_000);
-  } catch (_) {}
+  } catch {}
   return 0;
 }
 
 export async function getRestingHeartRateBpm(): Promise<number | null> {
-  const { start, end } = getTodayRange();
   try {
     const result = await queryStatisticsForQuantity(
       'HKQuantityTypeIdentifierRestingHeartRate' as any,
@@ -147,6 +144,6 @@ export async function getRestingHeartRateBpm(): Promise<number | null> {
       return Math.round(result.mostRecentQuantity.quantity);
     if (result?.averageQuantity?.quantity != null)
       return Math.round(result.averageQuantity.quantity);
-  } catch (_) {}
+  } catch {}
   return null;
 }

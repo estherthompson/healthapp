@@ -98,6 +98,5 @@ export function useHealth() {
     loading,
     requestAuth,
     refreshMetrics,
-    refreshSteps: refreshMetrics,
   };
 }

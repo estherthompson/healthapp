@@ -21,8 +21,10 @@ function getDb(): Firestore {
   if (!db) {
     if (!getApps().length) {
       app = initializeApp(FIREBASE_CONFIG);
+    } else {
+      app = getApps()[0] as FirebaseApp;
     }
-    db = getFirestore(app ?? undefined);
+    db = getFirestore(app);
   }
   return db;
 }
@@ -110,5 +112,6 @@ export async function firestoreGetPeriodFeeling(date: string): Promise<string | 
 }
 
 export async function firestoreSetPeriodFeeling(date: string, feeling: string): Promise<void> {
+  if (!isFirebaseConfigured()) return;
   await setDoc(doc(getDb(), COLLECTIONS.PERIOD_FEELINGS, date), { date, feeling });
 }
