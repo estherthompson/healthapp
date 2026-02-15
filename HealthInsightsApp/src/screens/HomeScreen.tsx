@@ -26,8 +26,7 @@ function statusLabel(s: HealthStatus): string {
 }
 
 export function HomeScreen() {
-  const { stepCount, status, available, loading, requestAuth, refreshSteps } =
-    useHealth();
+  const { stepCount, status, available, loading, requestAuth } = useHealth();
   const isDark = useColorScheme() === 'dark';
   const authorized = status === 'authorized';
 
@@ -90,11 +89,6 @@ export function HomeScreen() {
           {stepCount}
         </Text>
         <Text style={[styles.stepsUnit, isDark && styles.phaseDark]}>steps</Text>
-        {authorized && (
-          <TouchableOpacity style={styles.refreshButton} onPress={refreshSteps}>
-            <Text style={styles.refreshButtonText}>Refresh</Text>
-          </TouchableOpacity>
-        )}
       </View>
 
       <View style={[styles.goalsCard, isDark && styles.cardDark]}>
@@ -242,18 +236,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     marginTop: 4,
-  },
-  refreshButton: {
-    marginTop: 16,
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    backgroundColor: 'rgba(0, 122, 255, 0.12)',
-    borderRadius: 8,
-  },
-  refreshButtonText: {
-    color: '#007AFF',
-    fontSize: 16,
-    fontWeight: '500',
   },
   goalsCard: {
     backgroundColor: '#f2f2f7',

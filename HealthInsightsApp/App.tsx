@@ -10,6 +10,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { ChatScreen } from './src/screens/ChatScreen';
+import { ProfileScreen } from './src/screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -35,6 +36,11 @@ function App() {
             name="Chat"
             component={ChatScreen}
             options={{ title: 'Wellness Chat', tabBarLabel: 'Chat' }}
+          />
+          <Tab.Screen
+            name="Profile"
+            component={ProfileScreen}
+            options={{ title: 'Profile', tabBarLabel: 'Profile' }}
           />
         </Tab.Navigator>
       </NavigationContainer>
