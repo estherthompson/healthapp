@@ -16,6 +16,8 @@ export interface ReasoningResponse {
   red_flags: string[];
   reflection_prompt: string;
   follow_up_questions: string[];
+  /** When set, show this short contextual reply instead of the full card (e.g. greeting or "I'm hungry"). */
+  simple_reply?: string;
 }
 
 /** Misinformation detection mode: user pastes a claim to evaluate. */

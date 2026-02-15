@@ -1,5 +1,4 @@
-
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -24,35 +23,52 @@ import {
   getMedicalInfo,
 } from '../domain/context';
 import {
-  buildSymptomReasoningPrompt,
+  buildConversationSystemPrompt,
   buildMisinformationPrompt,
-  parseReasoningResponse,
   parseMisinformationResponse,
   detectEmergencyTrigger,
   getEmergencySafetyMessage,
 } from '../domain/reasoning';
-import type { ReasoningResponse, MisinformationResponse } from '../domain/reasoning';
+import type { MisinformationResponse } from '../domain/reasoning';
 import { chatCompletion } from '../services/aiService';
+import type { ChatMessage } from '../services/aiService';
 
 type ChatMode = 'symptom' | 'misinformation';
+
+type ChatEntry =
+  | { role: 'user'; text: string }
+  | { role: 'assistant'; text: string; misinfo?: MisinformationResponse };
+
+/** Keep last N messages in API payload so we don't exceed context window. */
+const MAX_HISTORY_MESSAGES = 20;
 
 export function ChatScreen() {
   const [mode, setMode] = useState<ChatMode>('symptom');
   const [input, setInput] = useState('');
+  const [messages, setMessages] = useState<ChatEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [reasoningResult, setReasoningResult] = useState<ReasoningResponse | null>(null);
-  const [misinfoResult, setMisinfoResult] = useState<MisinformationResponse | null>(null);
   const [emergencyBanner, setEmergencyBanner] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const sendingRef = useRef(false);
 
-  const runSymptomReasoning = useCallback(async () => {
-    const message = input.trim();
-    if (!message) return;
+  useEffect(() => {
+    const t = setTimeout(() => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+    return () => clearTimeout(t);
+  }, [messages, loading]);
+
+  const runSymptomReasoning = useCallback(async (message: string) => {
+    const trimmed = message.trim();
+    if (!trimmed) return;
+    if (sendingRef.current) return;
+    sendingRef.current = true;
 
     setError(null);
-    setMisinfoResult(null);
-    setReasoningResult(null);
-    setEmergencyBanner(detectEmergencyTrigger(message));
+    setEmergencyBanner(detectEmergencyTrigger(trimmed));
+    setMessages((prev) => [...prev, { role: 'user', text: trimmed }]);
+    setInput('');
     setLoading(true);
 
     try {
@@ -67,48 +83,71 @@ export function ChatScreen() {
         getState,
         getMedicalInfo,
       });
-      const { system, user } = buildSymptomReasoningPrompt(message, context);
-      const raw = await chatCompletion([
-        { role: 'system', content: system },
-        { role: 'user', content: user },
-      ]);
-      const parsed = parseReasoningResponse(raw);
-      setReasoningResult(parsed);
+      const systemContent = buildConversationSystemPrompt(context);
+      const recent = messages.slice(-MAX_HISTORY_MESSAGES);
+      const history: ChatMessage[] = recent.map((m) => ({
+        role: m.role,
+        content: m.text,
+      }));
+      const apiMessages: ChatMessage[] = [
+        { role: 'system', content: systemContent },
+        ...history,
+        { role: 'user', content: trimmed },
+      ];
+      const raw = await chatCompletion(apiMessages);
+      const reply =
+        typeof raw === 'string' && raw.trim()
+          ? raw.trim()
+          : "I didn't get a response. Please try again.";
+      setMessages((prev) => [...prev, { role: 'assistant', text: reply }]);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Something went wrong.');
+      const errMsg = e instanceof Error ? e.message : 'Something went wrong.';
+      setError(errMsg);
+      setMessages((prev) => [...prev, { role: 'assistant', text: errMsg }]);
     } finally {
       setLoading(false);
+      sendingRef.current = false;
     }
-  }, [input]);
+  }, [messages]);
 
-  const runMisinformationCheck = useCallback(async () => {
-    const claim = input.trim();
-    if (!claim) return;
+  const runMisinformationCheck = useCallback(async (claim: string) => {
+    const trimmed = claim.trim();
+    if (!trimmed) return;
+    if (sendingRef.current) return;
+    sendingRef.current = true;
 
     setError(null);
-    setReasoningResult(null);
-    setMisinfoResult(null);
+    setMessages((prev) => [...prev, { role: 'user', text: trimmed }]);
+    setInput('');
     setLoading(true);
 
     try {
-      const { system, user } = buildMisinformationPrompt(claim);
+      const { system, user } = buildMisinformationPrompt(trimmed);
       const raw = await chatCompletion([
         { role: 'system', content: system },
         { role: 'user', content: user },
       ]);
       const parsed = parseMisinformationResponse(raw);
-      setMisinfoResult(parsed);
+      const summary =
+        parsed.claim_analyzed +
+        (parsed.evidence_confidence ? ` (Evidence: ${parsed.evidence_confidence})` : '');
+      setMessages((prev) => [...prev, { role: 'assistant', text: summary, misinfo: parsed }]);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Something went wrong.');
+      const errMsg = e instanceof Error ? e.message : 'Something went wrong.';
+      setError(errMsg);
+      setMessages((prev) => [...prev, { role: 'assistant', text: errMsg }]);
     } finally {
       setLoading(false);
+      sendingRef.current = false;
     }
-  }, [input]);
+  }, []);
 
   const handleSend = useCallback(() => {
-    if (mode === 'symptom') runSymptomReasoning();
-    else runMisinformationCheck();
-  }, [mode, runSymptomReasoning, runMisinformationCheck]);
+    const text = input.trim();
+    if (!text || loading) return;
+    if (mode === 'symptom') runSymptomReasoning(text);
+    else runMisinformationCheck(text);
+  }, [mode, input, loading, runSymptomReasoning, runMisinformationCheck]);
 
   return (
     <AuroraBlobBackground style={styles.gradient}>
@@ -123,8 +162,6 @@ export function ChatScreen() {
             style={[styles.modeBtn, mode === 'symptom' && styles.modeBtnActive]}
             onPress={() => {
               setMode('symptom');
-              setReasoningResult(null);
-              setMisinfoResult(null);
               setError(null);
             }}
           >
@@ -136,8 +173,6 @@ export function ChatScreen() {
             style={[styles.modeBtn, mode === 'misinformation' && styles.modeBtnActive]}
             onPress={() => {
               setMode('misinformation');
-              setReasoningResult(null);
-              setMisinfoResult(null);
               setError(null);
             }}
           >
@@ -160,17 +195,36 @@ export function ChatScreen() {
         )}
 
         <ScrollView
+          ref={scrollRef}
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
         >
-          {reasoningResult && (
-            <ReasoningCard response={reasoningResult} />
-          )}
-          {misinfoResult && (
-            <MisinformationCard response={misinfoResult} />
-          )}
+          {messages.map((entry, idx) => {
+            if (entry.role === 'user') {
+              return (
+                <View key={idx} style={styles.userBubbleWrap}>
+                  <View style={styles.userBubble}>
+                    <Text style={styles.userBubbleText}>{entry.text}</Text>
+                  </View>
+                </View>
+              );
+            }
+            return (
+              <View key={idx}>
+                <View style={styles.assistantBubbleWrap}>
+                  <View style={styles.assistantBubble}>
+                    <Text style={styles.assistantBubbleText}>{entry.text}</Text>
+                  </View>
+                </View>
+                {entry.misinfo && (
+                  <MisinformationCard response={entry.misinfo} />
+                )}
+              </View>
+            );
+          })}
           {error && (
             <View style={styles.errorBox}>
               <Text style={styles.errorText}>{error}</Text>
@@ -189,7 +243,7 @@ export function ChatScreen() {
             style={styles.input}
             placeholder={
               mode === 'symptom'
-                ? 'e.g. I feel dizzy today. Should I go to the doctor?'
+                ? 'Say hi, or ask about your food log, sleep, how you feel…'
                 : 'Paste a claim you saw online to evaluate'
             }
             placeholderTextColor="#78716c"
@@ -209,55 +263,6 @@ export function ChatScreen() {
         </View>
       </KeyboardAvoidingView>
     </AuroraBlobBackground>
-  );
-}
-
-function ReasoningCard({ response }: { response: ReasoningResponse }) {
-  return (
-    <View style={styles.card}>
-      <View style={styles.alertRow}>
-        <Ionicons name="shield-checkmark" size={18} color="#15803d" />
-        <Text style={styles.safetyAlert}>{response.safety_alert}</Text>
-      </View>
-      {response.baseline_comparison.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Compared to your baseline</Text>
-          {response.baseline_comparison.map((line, i) => (
-            <Text key={i} style={styles.bullet}>• {line}</Text>
-          ))}
-        </View>
-      )}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Possible causes</Text>
-        {response.possible_causes.map((c, i) => (
-          <View key={i} style={styles.causeBlock}>
-            <Text style={styles.causeText}>{c.cause}</Text>
-            <Text style={styles.confidenceBadge}>{c.confidence}</Text>
-            {c.supporting_data.length > 0 &&
-              c.supporting_data.map((s, j) => (
-                <Text key={j} style={styles.supportingData}>↳ {s}</Text>
-              ))}
-          </View>
-        ))}
-      </View>
-      {response.red_flags.length > 0 && (
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, styles.redFlagsTitle]}>When to see a doctor</Text>
-          {response.red_flags.map((r, i) => (
-            <Text key={i} style={styles.redFlag}>⚠ {r}</Text>
-          ))}
-        </View>
-      )}
-      <Text style={styles.reflection}>{response.reflection_prompt}</Text>
-      {response.follow_up_questions.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Follow-up questions</Text>
-          {response.follow_up_questions.map((q, i) => (
-            <Text key={i} style={styles.bullet}>• {q}</Text>
-          ))}
-        </View>
-      )}
-    </View>
   );
 }
 
@@ -347,6 +352,42 @@ const styles = StyleSheet.create({
   },
   scroll: { flex: 1 },
   scrollContent: { paddingBottom: 24 },
+  userBubbleWrap: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: 10,
+  },
+  userBubble: {
+    maxWidth: '85%',
+    backgroundColor: '#5a4a3a',
+    borderRadius: 18,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+  },
+  userBubbleText: {
+    fontSize: 15,
+    color: '#fef08a',
+    lineHeight: 20,
+  },
+  assistantBubbleWrap: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginBottom: 10,
+  },
+  assistantBubble: {
+    maxWidth: '85%',
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    borderRadius: 18,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(41,37,36,0.1)',
+  },
+  assistantBubbleText: {
+    fontSize: 15,
+    color: '#292524',
+    lineHeight: 22,
+  },
   card: {
     backgroundColor: 'rgba(255,255,255,0.85)',
     borderRadius: 12,

@@ -58,6 +58,23 @@ export function parseReasoningResponse(rawText: string): ReasoningResponse {
   }
 
   const o = parsed as Record<string, unknown>;
+  const simpleReply =
+    typeof o.simple_reply === 'string' && o.simple_reply.trim()
+      ? o.simple_reply.trim()
+      : undefined;
+
+  if (simpleReply) {
+    return {
+      safety_alert: '',
+      baseline_comparison: [],
+      possible_causes: [],
+      red_flags: [],
+      reflection_prompt: '',
+      follow_up_questions: [],
+      simple_reply: simpleReply,
+    };
+  }
+
   const possible_causes = ensureArray(o.possible_causes, parsePossibleCause).filter(
     (c): c is PossibleCause => c !== null
   );

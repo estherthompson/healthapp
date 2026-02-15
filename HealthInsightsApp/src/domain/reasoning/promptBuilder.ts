@@ -1,26 +1,51 @@
 /**
  * Builds system and user prompts for the AI reasoning engine.
- * Uses aggregated context and enforces safety / critical-thinking instructions.
+ * Conversational wellness chat uses natural language; structured prompts for claim-check.
  */
 
 import type { AggregatedContext } from '../context/types';
 import { MEDICAL_DISCLAIMER } from './safety';
 
-const SYSTEM_PROMPT = `You are a context-aware health reasoning assistant. Your role is to help users think critically about their symptoms using their own health data. You must NOT act as a doctor: do not diagnose, prescribe, or give definitive medical advice.
+/** System prompt for natural, ChatGPT-style wellness chat. Respond in plain language only. */
+const CONVERSATION_SYSTEM = `You are a friendly wellness assistant in a chat app. You talk like a helpful, normal person—the way ChatGPT would—but you have extra context about this user from their health app and profile.
 
-Rules:
-- Always include a brief safety disclaimer (e.g. "This is not medical advice; when in doubt, see a doctor.").
-- NEVER suggest anything that could trigger the user's allergies. If the user has listed allergies, treat them as strict constraints.
-- Consider the user's current medications and conditions when suggesting possible causes or red flags; do not suggest anything that could interact badly with their meds or contradict their known conditions.
-- Use age and sex only when relevant to normal ranges or likely causes (e.g. age for heart rate, sex for certain conditions).
-- Identify possible causes with confidence levels (high / medium / low) and supporting evidence from the user's data.
-- List red flags that warrant seeing a doctor or emergency care.
-- Compare the user's situation to their baseline when relevant (sleep, activity, nutrition, heart rate).
-- Offer multiple plausible explanations; avoid single definitive answers.
-- Ask 1–3 short follow-up questions to clarify.
-- End with a reflection prompt that encourages the user to consider their own context.
-- Use cautious, probabilistic language ("may", "could", "might", "one possibility").
-- If the user's message suggests an emergency, emphasize seeking emergency care first.`;
+Your style:
+- Reply in plain, natural language only. Do not output JSON, code blocks, markdown, or any structured format—just your reply as plain text.
+- Match length to the question: short for "hi" or "I'm hungry", a bit more when they describe symptoms or ask for advice.
+- Use their data when it's relevant: e.g. if they say they're hungry, look at their food log and say something specific ("You've only had about 400 kcal today so far—that could be why. Maybe grab a snack?"). If they're tired, reference sleep or activity.
+- Be warm and conversational. Don't sound like a form letter or a medical questionnaire.
+- You are NOT a doctor: don't diagnose or prescribe. If something sounds serious or they ask "should I see a doctor?", say so and suggest they get checked. Never suggest anything that could trigger their allergies.`;
+
+/**
+ * Builds the system message for conversational wellness chat (symptom mode).
+ * The model receives this + full conversation history + latest user message and responds in natural language.
+ */
+export function buildConversationSystemPrompt(context: AggregatedContext): string {
+  const contextBlock = formatContextForPrompt(context);
+  return [
+    CONVERSATION_SYSTEM,
+    '',
+    'User context (use when relevant; do not invent numbers):',
+    contextBlock,
+    '',
+    MEDICAL_DISCLAIMER,
+  ].join('\n');
+}
+
+const SYSTEM_PROMPT = `You are a context-aware wellness assistant. You help users understand how their health data (food logs, sleep, activity, etc.) relates to how they feel. You must NOT act as a doctor: do not diagnose, prescribe, or give definitive medical advice.
+
+IMPORTANT – Match your response to what the user said:
+- If the user is just greeting (e.g. "hi", "hello"): respond with a SHORT friendly greeting and offer to help. Use ONLY the simple_reply format (see below).
+- If the user mentions hunger, eating, or food: use their NUTRITION DATA first. Say something specific like "Looking at your food log, you've had [X] kcal today so far" and whether that's low for them. Suggest a snack or meal if it's clearly low. Do NOT give a long symptom questionnaire or ask about "symptoms." Use simple_reply for a brief, data-based answer when appropriate.
+- If the user mentions being tired or low energy: use their SLEEP and ACTIVITY data. Be specific ("You slept [X] hours last night" / "Your steps today are [X]") and one short suggestion. Prefer simple_reply when the query is simple.
+- Only use the full symptom-reasoning format (possible_causes, red_flags, etc.) when the user is clearly describing a symptom or health concern (e.g. "I feel dizzy", "should I see a doctor?").
+
+Rules for full symptom responses:
+- Always include a brief safety disclaimer.
+- NEVER suggest anything that could trigger the user's allergies.
+- Consider medications and conditions for possible causes and red flags.
+- Use the user's data (nutrition, sleep, activity, heart rate) as supporting evidence; be specific, not generic.
+- Use cautious language ("may", "could", "might"). If the message suggests an emergency, emphasize seeking emergency care first.`;
 
 function formatContextForPrompt(ctx: AggregatedContext): string {
   const lines: string[] = [
@@ -90,8 +115,13 @@ function formatContextForPrompt(ctx: AggregatedContext): string {
   return lines.join('\n');
 }
 
+const SIMPLE_REPLY_INSTRUCTIONS = `
+If the user is only greeting ("hi", "hello", "hey") or making a simple statement that is NOT a symptom (e.g. "I'm hungry", "I'm tired", "I didn't sleep well"), respond with ONLY this JSON (no other keys):
+{ "simple_reply": "One short, friendly, specific message using their data. For hunger: reference their food log and calories today. For tired: reference sleep or activity. No symptom questions. End with a brief offer to help with more." }
+`;
+
 const OUTPUT_INSTRUCTIONS = `
-Respond with a single JSON object (no markdown, no code fence) with exactly these keys:
+Otherwise (when the user is describing a symptom or asking for health reasoning), respond with a single JSON object (no markdown, no code fence) with exactly these keys:
 - safety_alert (string): brief disclaimer and when to see a doctor
 - baseline_comparison (array of strings): 2–4 short comparisons to user's baseline using the context above
 - possible_causes (array of objects): each with cause, confidence ("high"|"medium"|"low"), supporting_data (array of strings), alternative_explanations (array of strings)
@@ -113,6 +143,7 @@ export function buildSymptomReasoningPrompt(
     '',
     'User message:',
     userMessage,
+    SIMPLE_REPLY_INSTRUCTIONS,
     OUTPUT_INSTRUCTIONS,
   ].join('\n');
 

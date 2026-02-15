@@ -4,7 +4,7 @@ export type {
   ConfidenceLevel,
   MisinformationResponse,
 } from './types';
-export { buildSymptomReasoningPrompt, buildMisinformationPrompt } from './promptBuilder';
+export { buildSymptomReasoningPrompt, buildMisinformationPrompt, buildConversationSystemPrompt } from './promptBuilder';
 export { parseReasoningResponse, parseMisinformationResponse } from './responseParser';
 export {
   MEDICAL_DISCLAIMER,
