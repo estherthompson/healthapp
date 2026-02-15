@@ -17,6 +17,7 @@
     "@react-navigation/native": "^7.1.28",
     "react": "19.2.3",
     "react-native": "0.84.0",
+    "react-native-dotenv": "^3.4.11",
     "react-native-health-connect": "^3.5.0",
     "react-native-nitro-modules": "^0.33.9",
     "react-native-safe-area-context": "^5.5.2",

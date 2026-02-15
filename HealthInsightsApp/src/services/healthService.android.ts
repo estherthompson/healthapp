@@ -31,6 +31,7 @@ export async function requestPermissions(): Promise<HealthStatus> {
     if (!inited) return 'not_available';
     const granted = await requestPermission([
       { accessType: 'read', recordType: 'Steps' },
+      { accessType: 'read', recordType: 'Hydration' },
     ]);
     const hasSteps = granted.some(
       (p: { recordType?: string }) => p.recordType === 'Steps'
@@ -64,4 +65,28 @@ export async function getTodayStepCount(): Promise<number> {
   } catch (_) {
     return 0;
   }
+}
+
+export async function getTodayWaterLiters(): Promise<number> {
+  try {
+    const inited = await initialize();
+    if (!inited) return 0;
+    const granted = await getGrantedPermissions();
+    const hasHydration = granted.some(
+      (p: { recordType?: string }) => p.recordType === 'Hydration'
+    );
+    if (!hasHydration) return 0;
+    const { startTime, endTime } = getTodayRange();
+    const result = await aggregateRecord({
+      recordType: 'Hydration',
+      timeRangeFilter: {
+        operator: 'between',
+        startTime,
+        endTime,
+      },
+    });
+    const vol = (result as { VOLUME_TOTAL?: { inLiters: number } }).VOLUME_TOTAL;
+    if (vol?.inLiters != null) return Math.round(vol.inLiters * 100) / 100;
+  } catch (_) {}
+  return 0;
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -8,14 +8,12 @@ import {
   ScrollView,
   useColorScheme,
 } from 'react-native';
+import { useAppData } from '../context/AppDataContext';
 
 export function ProfileScreen() {
   const isDark = useColorScheme() === 'dark';
-
-  const [pregnant, setPregnant] = useState<'yes' | 'no' | null>(null);
-  const [pregnancyWeeks, setPregnancyWeeks] = useState('');
-  const [breastfeeding, setBreastfeeding] = useState<'yes' | 'no' | null>(null);
-  const [breastfeedingDuration, setBreastfeedingDuration] = useState('');
+  const { profile, updateProfile } = useAppData();
+  const { pregnant, pregnancyWeeks, breastfeeding, breastfeedingDuration } = profile;
 
   return (
     <ScrollView
@@ -40,7 +38,7 @@ export function ProfileScreen() {
               pregnant === 'yes' && styles.optionSelected,
               isDark && pregnant === 'yes' && styles.optionSelectedDark,
             ]}
-            onPress={() => setPregnant('yes')}
+            onPress={() => updateProfile({ pregnant: 'yes' })}
           >
             <Text
               style={[
@@ -59,8 +57,7 @@ export function ProfileScreen() {
               isDark && pregnant === 'no' && styles.optionSelectedDark,
             ]}
             onPress={() => {
-              setPregnant('no');
-              setPregnancyWeeks('');
+              updateProfile({ pregnant: 'no', pregnancyWeeks: '' });
             }}
           >
             <Text
@@ -85,7 +82,7 @@ export function ProfileScreen() {
                 isDark && styles.inputDark,
               ]}
               value={pregnancyWeeks}
-              onChangeText={setPregnancyWeeks}
+              onChangeText={(text) => updateProfile({ pregnancyWeeks: text })}
               placeholder="e.g. 12"
               placeholderTextColor={isDark ? '#8e8e93' : '#999'}
               keyboardType="number-pad"
@@ -107,7 +104,7 @@ export function ProfileScreen() {
               breastfeeding === 'yes' && styles.optionSelected,
               isDark && breastfeeding === 'yes' && styles.optionSelectedDark,
             ]}
-            onPress={() => setBreastfeeding('yes')}
+            onPress={() => updateProfile({ breastfeeding: 'yes' })}
           >
             <Text
               style={[
@@ -126,8 +123,7 @@ export function ProfileScreen() {
               isDark && breastfeeding === 'no' && styles.optionSelectedDark,
             ]}
             onPress={() => {
-              setBreastfeeding('no');
-              setBreastfeedingDuration('');
+              updateProfile({ breastfeeding: 'no', breastfeedingDuration: '' });
             }}
           >
             <Text
@@ -152,7 +148,7 @@ export function ProfileScreen() {
                 isDark && styles.inputDark,
               ]}
               value={breastfeedingDuration}
-              onChangeText={setBreastfeedingDuration}
+              onChangeText={(text) => updateProfile({ breastfeedingDuration: text })}
               placeholder="e.g. 3 months"
               placeholderTextColor={isDark ? '#8e8e93' : '#999'}
               keyboardType="default"

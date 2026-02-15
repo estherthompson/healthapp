@@ -26,7 +26,7 @@ function statusLabel(s: HealthStatus): string {
 }
 
 export function HomeScreen() {
-  const { stepCount, status, available, loading, requestAuth } = useHealth();
+  const { stepCount, waterLiters, status, available, loading, requestAuth } = useHealth();
   const isDark = useColorScheme() === 'dark';
   const authorized = status === 'authorized';
 
@@ -89,6 +89,16 @@ export function HomeScreen() {
           {stepCount}
         </Text>
         <Text style={[styles.stepsUnit, isDark && styles.phaseDark]}>steps</Text>
+      </View>
+
+      <View style={[styles.waterCard, isDark && styles.cardDark]}>
+        <Text style={[styles.waterTitle, isDark && styles.textDark]}>
+          Today's water intake
+        </Text>
+        <Text style={[styles.waterValue, isDark && styles.textDark]}>
+          {waterLiters.toFixed(1)}
+        </Text>
+        <Text style={[styles.waterUnit, isDark && styles.phaseDark]}>L</Text>
       </View>
 
       <View style={[styles.goalsCard, isDark && styles.cardDark]}>
@@ -233,6 +243,29 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   stepsUnit: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 4,
+  },
+  waterCard: {
+    backgroundColor: '#f2f2f7',
+    borderRadius: 16,
+    padding: 24,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  waterTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#666',
+    marginBottom: 8,
+  },
+  waterValue: {
+    fontSize: 56,
+    fontWeight: '700',
+    color: '#000',
+  },
+  waterUnit: {
     fontSize: 16,
     color: '#666',
     marginTop: 4,

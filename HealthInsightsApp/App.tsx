@@ -8,6 +8,7 @@ import { StatusBar, useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { AppDataProvider } from './src/context/AppDataContext';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { ChatScreen } from './src/screens/ChatScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
@@ -19,8 +20,9 @@ function App() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
-      <NavigationContainer>
+      <AppDataProvider>
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+        <NavigationContainer>
         <Tab.Navigator
           screenOptions={{
             headerShown: true,
@@ -44,6 +46,7 @@ function App() {
           />
         </Tab.Navigator>
       </NavigationContainer>
+      </AppDataProvider>
     </SafeAreaProvider>
   );
 }

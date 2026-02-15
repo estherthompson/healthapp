@@ -21,3 +21,8 @@ export const getTodayStepCount =
   Platform.OS === 'ios'
     ? require('./healthService.ios').getTodayStepCount
     : require('./healthService.android').getTodayStepCount;
+
+export const getTodayWaterLiters =
+  Platform.OS === 'ios'
+    ? require('./healthService.ios').getTodayWaterLiters
+    : require('./healthService.android').getTodayWaterLiters;

@@ -4,6 +4,7 @@ import {
   checkAvailability,
   requestPermissions,
   getTodayStepCount,
+  getTodayWaterLiters,
   type HealthStatus,
 } from '../services/healthService';
 
@@ -11,14 +12,19 @@ const STEPS_POLL_INTERVAL_MS = 30_000; // refresh every 30 seconds when app is o
 
 export function useHealth() {
   const [stepCount, setStepCount] = useState(0);
+  const [waterLiters, setWaterLiters] = useState(0);
   const [status, setStatus] = useState<HealthStatus>('unknown');
   const [available, setAvailable] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const appState = useRef(AppState.currentState);
 
   const refreshSteps = useCallback(async () => {
-    const steps = await getTodayStepCount();
+    const [steps, water] = await Promise.all([
+      getTodayStepCount(),
+      getTodayWaterLiters(),
+    ]);
     setStepCount(steps);
+    setWaterLiters(water);
   }, []);
 
   const requestAuth = useCallback(async () => {
@@ -41,9 +47,13 @@ export function useHealth() {
         setLoading(false);
         return;
       }
-      const steps = await getTodayStepCount();
+      const [steps, water] = await Promise.all([
+        getTodayStepCount(),
+        getTodayWaterLiters(),
+      ]);
       if (cancelled) return;
       setStepCount(steps);
+      setWaterLiters(water);
       setStatus('not_requested');
       setLoading(false);
     })();
@@ -76,6 +86,7 @@ export function useHealth() {
 
   return {
     stepCount,
+    waterLiters,
     status,
     available: available ?? false,
     loading,
