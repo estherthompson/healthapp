@@ -37,6 +37,10 @@
 	<string>BloomAi uses your health data (steps, distance, activity, sleep, heart rate, and more) to show activity and provide wellness insights.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>BloomAi uses your health data to provide personalized wellness insights.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>BloomAi uses the camera to scan your meal for food recognition.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>BloomAi needs photo access to scan meal images for food recognition.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
 	<key>RCTNewArchEnabled</key>

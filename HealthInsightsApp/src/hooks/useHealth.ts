@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   checkAvailability,
+  getAuthorizationStatus,
   requestPermissions,
   getTodayStepCount,
   getTodayDistanceKm,
@@ -70,9 +71,13 @@ export function useHealth() {
         setLoading(false);
         return;
       }
-      await refreshMetrics();
+      const authStatus = await getAuthorizationStatus();
       if (cancelled) return;
-      setStatus('not_requested');
+      setStatus(authStatus);
+      if (authStatus === 'authorized') {
+        await refreshMetrics();
+      }
+      if (cancelled) return;
       setLoading(false);
     })();
     return () => {

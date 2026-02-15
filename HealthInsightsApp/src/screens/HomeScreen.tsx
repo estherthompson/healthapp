@@ -85,15 +85,17 @@ export function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Bloom logo + greeting + date */}
+        {/* Bloom logo next to greeting + date */}
         <View style={styles.header}>
           <Image
-            source={require('../../assets/images/bloom-icon.png')}
+            source={require('../../assets/images/bloom-logo.png')}
             style={styles.logo}
             resizeMode="contain"
           />
-          <Text style={styles.greeting}>Hey there!</Text>
-          <Text style={styles.date}>{formatDate()}</Text>
+          <View style={styles.headerText}>
+            <Text style={styles.greeting}>Hey there!</Text>
+            <Text style={styles.date}>{formatDate()}</Text>
+          </View>
         </View>
 
         {/* Compact status: pill or connect button */}
@@ -220,7 +222,7 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 52,
+    paddingTop: 72,
     paddingBottom: 24,
   },
   centered: {
@@ -234,12 +236,17 @@ const styles = StyleSheet.create({
     color: palette.text,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 12,
   },
   logo: {
-    width: 48,
-    height: 48,
-    marginBottom: 8,
+    width: 72,
+    height: 72,
+    marginRight: 14,
+  },
+  headerText: {
+    flex: 1,
   },
   greeting: {
     fontSize: 26,

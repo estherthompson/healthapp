@@ -45,6 +45,18 @@ export async function checkAvailability(): Promise<boolean> {
   }
 }
 
+/** Check current Health Connect auth without prompting. */
+export async function getAuthorizationStatus(): Promise<HealthStatus> {
+  try {
+    const inited = await initialize();
+    if (!inited) return 'not_available';
+    const granted = await getGrantedPermissions();
+    return hasPermission(granted, 'Steps') ? 'authorized' : 'not_requested';
+  } catch {
+    return 'not_available';
+  }
+}
+
 export async function requestPermissions(): Promise<HealthStatus> {
   try {
     const inited = await initialize();

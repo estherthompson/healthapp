@@ -1,6 +1,8 @@
 import {
   isHealthDataAvailable,
   requestAuthorization,
+  getRequestStatusForAuthorization,
+  authorizationStatusFor,
   queryStatisticsForQuantity,
   queryCategorySamples,
 } from '@kingstinct/react-native-healthkit';
@@ -30,6 +32,25 @@ export type HealthStatus = 'unknown' | 'not_available' | 'not_requested' | 'deni
 
 export async function checkAvailability(): Promise<boolean> {
   return isHealthDataAvailable();
+}
+
+/** Check current HealthKit auth without prompting. Use to avoid "Connect" when already authorized. */
+export async function getAuthorizationStatus(): Promise<HealthStatus> {
+  const available = await isHealthDataAvailable();
+  if (!available) return 'not_available';
+  try {
+    const status = await getRequestStatusForAuthorization({ toRead: [...READ_TYPES] });
+    // 2 = unnecessary (user already prompted). Check per-type status to avoid re-prompting.
+    if (status === 2 /* AuthorizationRequestStatus.unnecessary */) {
+      const stepAuth = authorizationStatusFor('HKQuantityTypeIdentifierStepCount' as any);
+      // 2 = sharingAuthorized, 1 = sharingDenied, 0 = notDetermined
+      if (stepAuth === 2) return 'authorized';
+      if (stepAuth === 1) return 'denied';
+    }
+    return 'not_requested';
+  } catch {
+    return 'denied';
+  }
 }
 
 export async function requestPermissions(): Promise<HealthStatus> {

@@ -12,6 +12,11 @@ export const checkAvailability =
     ? require('./healthService.ios').checkAvailability
     : require('./healthService.android').checkAvailability;
 
+export const getAuthorizationStatus =
+  Platform.OS === 'ios'
+    ? require('./healthService.ios').getAuthorizationStatus
+    : require('./healthService.android').getAuthorizationStatus;
+
 export const requestPermissions =
   Platform.OS === 'ios'
     ? require('./healthService.ios').requestPermissions

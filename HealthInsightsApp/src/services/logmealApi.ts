@@ -25,7 +25,28 @@ export interface GetDishesOptions {
   cookingMeasures?: boolean;
 }
 
+/** One detected dish from image recognition (top match per region). */
+export interface LogMealRecognizedDish {
+  id: number;
+  name: string;
+  prob: number;
+}
+
+/** One food region detected in the image. */
+export interface LogMealSegmentationItem {
+  food_item_position: number;
+  recognition_results: Array<{ id: number; name: string; prob: number }>;
+}
+
+export interface LogMealRecognitionResponse {
+  imageId: number;
+  segmentation_results: LogMealSegmentationItem[];
+  foodType?: { id: number; name: string };
+  occasion?: string;
+}
+
 const DISHES_PATH = '/v2/dataset/dishes';
+const SEGMENTATION_PATH = '/v2/image/segmentation/complete';
 
 /**
  * Fetches all dishes/products detectable by LogMeal image recognition.
@@ -56,4 +77,47 @@ export async function getDishes(options?: GetDishesOptions): Promise<LogMealDish
   }
 
   return res.json() as Promise<LogMealDishesResponse>;
+}
+
+/**
+ * Sends a food image to LogMeal for recognition (scan meal).
+ * Uses APIUser token (userApiKey) if set, else company apiKey.
+ * Returns detected food regions and top dish matches.
+ */
+export async function recognizeFoodImage(
+  imageUri: string,
+  options?: { language?: LogMealLanguage }
+): Promise<LogMealRecognitionResponse> {
+  const { baseUrl, apiKey, userApiKey } = LOGMEAL_CONFIG;
+  const token = (userApiKey && !userApiKey.startsWith('YOUR_')) ? userApiKey : apiKey;
+  if (!token || token.startsWith('YOUR_LOGMEAL_')) {
+    throw new Error('LogMeal API key not set. Add your key in src/config/logmeal.ts (apiKey or userApiKey).');
+  }
+
+  const formData = new FormData();
+  formData.append('image', {
+    uri: imageUri,
+    type: 'image/jpeg',
+    name: 'photo.jpg',
+  } as unknown as Blob);
+
+  const params = new URLSearchParams();
+  if (options?.language) params.set('language', options.language);
+  const url = `${baseUrl}${SEGMENTATION_PATH}${params.toString() ? `?${params.toString()}` : ''}`;
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      accept: 'application/json',
+      authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`LogMeal API error ${res.status}: ${text || res.statusText}`);
+  }
+
+  return res.json() as Promise<LogMealRecognitionResponse>;
 }
