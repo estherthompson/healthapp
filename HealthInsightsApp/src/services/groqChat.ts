@@ -25,9 +25,9 @@ export async function getGroqReply(
     'Frame your advice clearly as suggestions only (e.g. "These are just suggestions—please see a doctor for proper care.").';
   if (userContextSummary?.trim()) {
     systemContent +=
-      '\n\nUse this information about the user when answering. Base your suggestions on their data. For example: ' +
+      '\n\nYou have access to this user\'s data from their app. Use it when answering:\n' +
       userContextSummary +
-      ' When they ask about symptoms (e.g. nausea, headache, tiredness), use their data to suggest possible reasons: e.g. if pregnant, mention pregnancy-related causes (morning sickness); if they have high step count, consider dehydration or hunger; consider hunger, dehydration, period, low blood sugar, or stress when relevant. Always tie your suggestions to what you know about them. Keep advice pregnancy-safe or breastfeeding-safe when applicable.';
+      '\n\nWhen answering: reference their steps, water, food log, or profile when relevant (e.g. in greetings you can briefly mention how their day looks). When they ask about symptoms (e.g. nausea, headache, tiredness), use their data to suggest possible reasons: e.g. if pregnant, mention pregnancy-related causes; if they have high step count, consider dehydration or hunger; consider hunger, dehydration, period, low blood sugar, or stress when relevant. Always tie your suggestions to what you know about them. Keep advice pregnancy-safe or breastfeeding-safe when applicable.';
   }
 
   const messages: ChatMessage[] = [
@@ -52,6 +52,11 @@ export async function getGroqReply(
 
   if (!res.ok) {
     const errText = await res.text();
+    if (res.status === 401) {
+      throw new Error(
+        'Invalid Groq API key. Get a new key at https://console.groq.com and add it to src/config/groq.local.ts (copy from groq.local.example.ts).'
+      );
+    }
     throw new Error(`Groq API error ${res.status}: ${errText || res.statusText}`);
   }
 

@@ -27,12 +27,11 @@ export const getTodayStepCount =
     ? require('./healthService.ios').getTodayStepCount
     : require('./healthService.android').getTodayStepCount;
 
-<<<<<<< HEAD
 export const getTodayWaterLiters =
   Platform.OS === 'ios'
     ? require('./healthService.ios').getTodayWaterLiters
     : require('./healthService.android').getTodayWaterLiters;
-=======
+
 export const getTodayDistanceKm =
   Platform.OS === 'ios'
     ? require('./healthService.ios').getTodayDistanceKm
@@ -62,4 +61,3 @@ export const getRestingHeartRateBpm =
   Platform.OS === 'ios'
     ? require('./healthService.ios').getRestingHeartRateBpm
     : require('./healthService.android').getRestingHeartRateBpm;
->>>>>>> origin/walija

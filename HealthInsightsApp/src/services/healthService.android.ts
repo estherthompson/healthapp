@@ -61,19 +61,9 @@ export async function requestPermissions(): Promise<HealthStatus> {
   try {
     const inited = await initialize();
     if (!inited) return 'not_available';
-<<<<<<< HEAD
-    const granted = await requestPermission([
-      { accessType: 'read', recordType: 'Steps' },
-      { accessType: 'read', recordType: 'Hydration' },
-    ]);
-    const hasSteps = granted.some(
-      (p: { recordType?: string }) => p.recordType === 'Steps'
-    );
-=======
     await requestPermission(PERMISSIONS as any);
     const granted = await getGrantedPermissions();
     const hasSteps = hasPermission(granted, 'Steps');
->>>>>>> origin/walija
     return hasSteps ? 'authorized' : 'denied';
   } catch {
     return 'denied';
@@ -97,35 +87,11 @@ export async function getTodayStepCount(): Promise<number> {
   }
 }
 
-<<<<<<< HEAD
-export async function getTodayWaterLiters(): Promise<number> {
-=======
 export async function getTodayDistanceKm(): Promise<number> {
->>>>>>> origin/walija
   try {
     const inited = await initialize();
     if (!inited) return 0;
     const granted = await getGrantedPermissions();
-<<<<<<< HEAD
-    const hasHydration = granted.some(
-      (p: { recordType?: string }) => p.recordType === 'Hydration'
-    );
-    if (!hasHydration) return 0;
-    const { startTime, endTime } = getTodayRange();
-    const result = await aggregateRecord({
-      recordType: 'Hydration',
-      timeRangeFilter: {
-        operator: 'between',
-        startTime,
-        endTime,
-      },
-    });
-    const vol = (result as { VOLUME_TOTAL?: { inLiters: number } }).VOLUME_TOTAL;
-    if (vol?.inLiters != null) return Math.round(vol.inLiters * 100) / 100;
-  } catch (_) {}
-  return 0;
-}
-=======
     if (!hasPermission(granted, 'Distance')) return 0;
     const result = await aggregateRecord({
       recordType: 'Distance',
@@ -218,4 +184,3 @@ export async function getRestingHeartRateBpm(): Promise<number | null> {
   } catch {}
   return null;
 }
->>>>>>> origin/walija

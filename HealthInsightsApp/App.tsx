@@ -9,16 +9,11 @@ import { loadProfileStore } from './src/storage/profileStore';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-<<<<<<< HEAD
 import { AppDataProvider } from './src/context/AppDataContext';
-import { HomeScreen } from './src/screens/HomeScreen';
-import { ChatScreen } from './src/screens/ChatScreen';
-=======
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { ChatScreen } from './src/screens/ChatScreen';
 import { FoodDiaryScreen } from './src/screens/FoodDiaryScreen';
->>>>>>> origin/walija
 import { ProfileScreen } from './src/screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
@@ -91,14 +86,9 @@ function App() {
 
   return (
     <SafeAreaProvider>
-<<<<<<< HEAD
       <AppDataProvider>
-        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+        <StatusBar barStyle="dark-content" />
         <NavigationContainer>
-=======
-      <StatusBar barStyle="dark-content" />
-      <NavigationContainer>
->>>>>>> origin/walija
         <Tab.Navigator
           screenOptions={{
             headerShown: true,
@@ -147,11 +137,6 @@ function App() {
               tabBarLabel: 'Profile',
               tabBarIcon: ProfileTabIcon,
             }}
-          />
-          <Tab.Screen
-            name="Profile"
-            component={ProfileScreen}
-            options={{ title: 'Profile', tabBarLabel: 'Profile' }}
           />
         </Tab.Navigator>
       </NavigationContainer>

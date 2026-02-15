@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { AuroraBlobBackground } from '../components/AuroraBlobBackground';
+import { useAppData, buildUserContextSummary } from '../context/AppDataContext';
+import { getTodayStepCount, getTodayWaterLiters } from '../services/healthService';
 import { getHealthProvider } from '../domain/health';
 import {
   aggregateContext,
@@ -44,6 +46,27 @@ type ChatEntry =
 /** Keep last N messages in API payload so we don't exceed context window. */
 const MAX_HISTORY_MESSAGES = 20;
 
+/** Build context string from Home (steps, water), Profile (pregnancy, breastfeeding), and Food so the bot can answer using real app data. */
+async function buildLiveContextSummary(
+  profile: { pregnant: 'yes' | 'no' | null; pregnancyWeeks: string; breastfeeding: 'yes' | 'no' | null; breastfeedingDuration: string },
+  stepCount: number,
+  waterLiters: number
+): Promise<string> {
+  const base = buildUserContextSummary(profile, stepCount, waterLiters);
+  const today = new Date().toISOString().slice(0, 10);
+  let nutritionLine = '';
+  try {
+    const nutrition = await getNutritionForDate(today);
+    if (nutrition && nutrition.portionG > 0) {
+      nutritionLine = ` Food log today: ${nutrition.portionG} g portion.`;
+    }
+  } catch (_) {
+    // ignore
+  }
+  const full = (base ? base.trim() : '') + nutritionLine;
+  return full ? full.trim() : 'No health or food data logged yet for today.';
+}
+
 export function ChatScreen() {
   const [mode, setMode] = useState<ChatMode>('symptom');
   const [input, setInput] = useState('');
@@ -53,6 +76,8 @@ export function ChatScreen() {
   const [emergencyBanner, setEmergencyBanner] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const sendingRef = useRef(false);
+
+  const { profile } = useAppData();
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -75,7 +100,9 @@ export function ChatScreen() {
 
     if (isSimpleGreeting(trimmed)) {
       try {
-        const reply = await getBotResponse(trimmed, [], undefined);
+        const [stepCount, waterLiters] = await Promise.all([getTodayStepCount(), getTodayWaterLiters()]);
+        const contextSummary = await buildLiveContextSummary(profile, stepCount, waterLiters);
+        const reply = await getBotResponse(trimmed, [], contextSummary);
         setMessages((prev) => [...prev, { role: 'assistant', text: reply }]);
       } catch (e) {
         const errMsg = e instanceof Error ? e.message : 'Something went wrong.';
@@ -88,25 +115,29 @@ export function ChatScreen() {
     }
 
     try {
-      const provider = getHealthProvider();
-      const today = new Date().toISOString().slice(0, 10);
-      const context = await aggregateContext(today, {
-        healthProvider: provider,
-        getNutritionForDate,
-        getCycleContext,
-        getMedications: getMedicationContext,
-        getProfileBasic,
-        getState,
-        getMedicalInfo,
-      });
       const recent = messages.slice(-MAX_HISTORY_MESSAGES);
       const history: ChatMessage[] = recent.map((m) => ({
         role: m.role,
         content: m.text,
       }));
 
+      // Fetch latest steps and water at send time so we pick up data right after user connects
+      const [stepCount, waterLiters] = await Promise.all([getTodayStepCount(), getTodayWaterLiters()]);
+      const contextSummary = await buildLiveContextSummary(profile, stepCount, waterLiters);
+
       let reply: string;
       if (isAiConfigured()) {
+        const provider = getHealthProvider();
+        const today = new Date().toISOString().slice(0, 10);
+        const context = await aggregateContext(today, {
+          healthProvider: provider,
+          getNutritionForDate,
+          getCycleContext,
+          getMedications: getMedicationContext,
+          getProfileBasic,
+          getState,
+          getMedicalInfo,
+        });
         const systemContent = buildConversationSystemPrompt(context);
         const apiMessages: ChatMessage[] = [
           { role: 'system', content: systemContent },
@@ -119,7 +150,6 @@ export function ChatScreen() {
             ? raw.trim()
             : "I didn't get a response. Please try again.";
       } else {
-        const contextSummary = formatContextForPrompt(context);
         reply = await getBotResponse(trimmed, history, contextSummary);
       }
       setMessages((prev) => [...prev, { role: 'assistant', text: reply }]);

@@ -34,7 +34,7 @@ function statusLabel(s: HealthStatus): string {
     case 'authorized':
       return getHealthServiceName();
     case 'denied':
-      return 'Access denied';
+      return getConnectToHealthLabel();
     case 'not_available':
       return 'Not available';
     case 'not_requested':

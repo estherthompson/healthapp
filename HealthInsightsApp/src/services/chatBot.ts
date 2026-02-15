@@ -1,10 +1,13 @@
 /**
- * Wellness chatbot: uses Groq API when EXPO_PUBLIC_GROQ_API_KEY is set in .env,
+ * Wellness chatbot: uses Groq API when key is set (groq.local.ts or .env),
  * otherwise falls back to local replies.
  */
 
-import { EXPO_PUBLIC_GROQ_API_KEY } from '@env';
+import { GROQ_CONFIG } from '../config/groq';
 import { getGroqReply, type ChatMessage } from './groqChat';
+
+const apiKey = (GROQ_CONFIG?.apiKey ?? '').trim();
+const isPlaceholder = !apiKey || apiKey.includes('YOUR_') || apiKey.startsWith('gsk_YOUR_');
 
 const GREETING_INPUTS = [
   'hi', 'hello', 'hey', 'hey there', 'hi there', 'hello there',
@@ -78,14 +81,26 @@ export async function getBotResponse(
   messageHistory: ChatMessage[] = [],
   userContextSummary?: string
 ): Promise<string> {
-  const key = typeof EXPO_PUBLIC_GROQ_API_KEY === 'string' ? EXPO_PUBLIC_GROQ_API_KEY.trim() : '';
-  if (key) {
+  const keyToUse = isPlaceholder ? '' : apiKey;
+  if (keyToUse) {
     try {
-      return await getGroqReply(key, userMessage.trim(), messageHistory, userContextSummary);
+      return await getGroqReply(keyToUse, userMessage.trim(), messageHistory, userContextSummary);
     } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
       console.warn('Groq API failed, using local reply:', e);
+      if (msg.includes('Invalid Groq API key') || msg.includes('invalid_api_key')) {
+        return (
+          "The chat can't reach the AI right now because the Groq API key is invalid or expired. " +
+          "Get a new key at https://console.groq.com and add it to src/config/groq.local.ts (copy groq.local.example.ts to groq.local.ts and paste your key)."
+        );
+      }
       return getLocalReply(userMessage);
     }
+  }
+  if (isPlaceholder) {
+    return (
+      "To use the AI chat, add your Groq API key: get one at https://console.groq.com, then copy groq.local.example.ts to groq.local.ts in src/config and set apiKey to your key."
+    );
   }
   return getLocalReply(userMessage);
 }

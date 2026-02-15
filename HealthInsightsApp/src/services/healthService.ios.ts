@@ -7,12 +7,9 @@ import {
   queryCategorySamples,
 } from '@kingstinct/react-native-healthkit';
 
-<<<<<<< HEAD
-const STEP_TYPE = 'HKQuantityTypeIdentifierStepCount';
-const WATER_TYPE = 'HKQuantityTypeIdentifierDietaryWater';
-=======
 const READ_TYPES = [
   'HKQuantityTypeIdentifierStepCount',
+  'HKQuantityTypeIdentifierDietaryWater',
   'HKQuantityTypeIdentifierDistanceWalkingRunning',
   'HKQuantityTypeIdentifierActiveEnergyBurned',
   'HKQuantityTypeIdentifierFlightsClimbed',
@@ -20,7 +17,6 @@ const READ_TYPES = [
   'HKQuantityTypeIdentifierRestingHeartRate',
   'HKCategoryTypeIdentifierSleepAnalysis',
 ] as const;
->>>>>>> origin/walija
 
 function getTodayRange(): { start: Date; end: Date } {
   const now = new Date();
@@ -62,11 +58,7 @@ export async function requestPermissions(): Promise<HealthStatus> {
   const available = await isHealthDataAvailable();
   if (!available) return 'not_available';
   try {
-<<<<<<< HEAD
-    await requestAuthorization({ toRead: [STEP_TYPE, WATER_TYPE] });
-=======
     await requestAuthorization({ toRead: [...READ_TYPES] });
->>>>>>> origin/walija
     return 'authorized';
   } catch {
     return 'denied';
@@ -89,12 +81,11 @@ async function querySum(
   return 0;
 }
 
-<<<<<<< HEAD
 export async function getTodayWaterLiters(): Promise<number> {
   const { start, end } = getTodayRange();
   try {
     const result = await queryStatisticsForQuantity(
-      WATER_TYPE,
+      'HKQuantityTypeIdentifierDietaryWater' as any,
       ['cumulativeSum'],
       { filter: { date: { startDate: start, endDate: end } } }
     );
@@ -103,7 +94,7 @@ export async function getTodayWaterLiters(): Promise<number> {
   } catch (_) {}
   return 0;
 }
-=======
+
 export async function getTodayStepCount(): Promise<number> {
   return Math.round(await querySum('HKQuantityTypeIdentifierStepCount'));
 }
@@ -171,4 +162,3 @@ export async function getRestingHeartRateBpm(): Promise<number | null> {
   } catch {}
   return null;
 }
->>>>>>> origin/walija

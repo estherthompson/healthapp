@@ -66,13 +66,9 @@ yarn-error.log
 # testing
 /coverage
 
-<<<<<<< HEAD
-# API keys / env (never commit)
-**/src/config/apiKeys.local.ts
-=======
 # Local config (API keys – do not commit)
+**/src/config/apiKeys.local.ts
 **/config/*.local.ts
->>>>>>> origin/walija
 .env
 .env.local
 
