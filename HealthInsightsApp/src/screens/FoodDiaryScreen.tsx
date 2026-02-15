@@ -3,17 +3,16 @@ import { View, Text, StyleSheet } from 'react-native';
 import { AuroraBlobBackground } from '../components/AuroraBlobBackground';
 
 /**
- * Phase 2 placeholder: AI Chatbot integration
+ * Food Diary – log meals and track nutrition
  */
-export function ChatScreen() {
+export function FoodDiaryScreen() {
   return (
     <AuroraBlobBackground style={styles.gradient}>
       <View style={styles.paperTint} pointerEvents="none" />
       <View style={styles.container}>
-        <Text style={styles.title}>Wellness Chat</Text>
+        <Text style={styles.title}>Food Diary</Text>
         <Text style={styles.subtitle}>
-          Phase 2: AI chatbot coming next. You’ll be able to ask things like
-          “How active was I this week?” and get personalized wellness insights.
+          Log your meals and track nutrition. Coming soon.
         </Text>
       </View>
     </AuroraBlobBackground>
