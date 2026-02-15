@@ -16,47 +16,83 @@ export const AURORA_GRADIENT = {
   end: { x: 0, y: 1 } as const,
 };
 
-/** Soft color blobs: each entry is one gradient "lump" to layer for a blob look */
+/** Soft color blobs: gentle ramps (no sharp bands) so they read round, not diamond-shaped */
 export const AURORA_BLOBS = [
-  // Orange blob top-right – strong orange
+  // Orange blob top-right – soft ramp in/out
   {
-    colors: ['rgba(255,255,255,0)', 'rgba(249,115,22,0.82)', 'rgba(255,255,255,0)'],
-    locations: [0.05, 0.28, 0.55],
+    colors: [
+      'rgba(255,255,255,0)',
+      'rgba(249,115,22,0.25)',
+      'rgba(249,115,22,0.85)',
+      'rgba(249,115,22,0.2)',
+      'rgba(255,255,255,0)',
+    ],
+    locations: [0, 0.12, 0.32, 0.55, 0.78],
     start: { x: 1, y: 0 },
     end: { x: 0, y: 1 },
   },
-  // Yellow blob upper-center – clear yellow
+  // Yellow blob upper-center – soft ramp
   {
-    colors: ['rgba(255,255,255,0)', 'rgba(254,240,138,0.88)', 'rgba(255,255,255,0)'],
-    locations: [0.25, 0.5, 0.75],
+    colors: [
+      'rgba(255,255,255,0)',
+      'rgba(253,224,71,0.35)',
+      'rgba(253,224,71,0.72)',
+      'rgba(253,224,71,0.3)',
+      'rgba(255,255,255,0)',
+    ],
+    locations: [0.2, 0.35, 0.5, 0.65, 0.85],
     start: { x: 0.5, y: 0 },
     end: { x: 0.5, y: 1 },
   },
-  // Soft orange blob left
+  // Soft orange blob left – gentle falloff
   {
-    colors: ['rgba(255,255,255,0)', 'rgba(251,146,60,0.75)', 'rgba(255,255,255,0)'],
-    locations: [0.1, 0.35, 0.6],
+    colors: [
+      'rgba(255,255,255,0)',
+      'rgba(251,146,60,0.3)',
+      'rgba(251,146,60,0.75)',
+      'rgba(251,146,60,0.25)',
+      'rgba(255,255,255,0)',
+    ],
+    locations: [0, 0.15, 0.38, 0.6, 0.85],
     start: { x: 0, y: 0.5 },
     end: { x: 1, y: 0.5 },
   },
-  // Warm yellow blob lower
+  // Warm yellow blob lower – pulled up so less yellow near tab bar / Food icon
   {
-    colors: ['rgba(255,255,255,0)', 'rgba(253,224,71,0.8)', 'rgba(255,255,255,0)'],
-    locations: [0.4, 0.65, 0.9],
+    colors: [
+      'rgba(255,255,255,0)',
+      'rgba(253,224,71,0.2)',
+      'rgba(253,224,71,0.52)',
+      'rgba(253,224,71,0.18)',
+      'rgba(255,255,255,0)',
+    ],
+    locations: [0.5, 0.65, 0.78, 0.88, 0.98],
     start: { x: 0.5, y: 1 },
     end: { x: 0.5, y: 0 },
   },
-  // Diagonal accent – orange tint center
+  // Orange blob center diagonal – soft edges
   {
-    colors: ['rgba(255,255,255,0)', 'rgba(249,115,22,0.55)', 'rgba(255,255,255,0)'],
-    locations: [0.35, 0.55, 0.75],
+    colors: [
+      'rgba(255,255,255,0)',
+      'rgba(249,115,22,0.2)',
+      'rgba(249,115,22,0.68)',
+      'rgba(249,115,22,0.18)',
+      'rgba(255,255,255,0)',
+    ],
+    locations: [0.2, 0.38, 0.55, 0.72, 0.9],
     start: { x: 0, y: 0 },
     end: { x: 1, y: 1 },
   },
-  // Light yellow blob bottom-right
+  // Orange blob bottom-right – soft ramp
   {
-    colors: ['rgba(255,255,255,0)', 'rgba(254,249,195,0.78)', 'rgba(255,255,255,0)'],
-    locations: [0.5, 0.78, 1],
+    colors: [
+      'rgba(255,255,255,0)',
+      'rgba(251,146,60,0.22)',
+      'rgba(251,146,60,0.65)',
+      'rgba(251,146,60,0.15)',
+      'rgba(255,255,255,0)',
+    ],
+    locations: [0.6, 0.75, 0.88, 0.96, 1],
     start: { x: 1, y: 1 },
     end: { x: 0, y: 0 },
   },

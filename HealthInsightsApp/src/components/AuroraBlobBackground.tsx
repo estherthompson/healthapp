@@ -3,7 +3,7 @@ import { View, StyleSheet, ViewStyle } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { AURORA_BLOBS } from '../constants/auroraGradient';
 
-const BASE_COLOR = '#fffef7';
+const BASE_COLOR = '#fff9f0';
 
 type AuroraBlobBackgroundProps = {
   children: React.ReactNode;
@@ -18,7 +18,7 @@ export function AuroraBlobBackground({ children, style }: AuroraBlobBackgroundPr
   return (
     <View style={[styles.container, style]}>
       <LinearGradient
-        colors={[BASE_COLOR, '#fefce8', BASE_COLOR]}
+        colors={[BASE_COLOR, '#fef3e2', BASE_COLOR]}
         locations={[0, 0.5, 1]}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
