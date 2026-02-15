@@ -63,7 +63,14 @@ export function formatContextForPrompt(ctx: AggregatedContext): string {
     if (p.sex) parts.push(`sex ${p.sex}`);
     if (p.heightCm != null) parts.push(`height ${p.heightCm} cm`);
     if (p.weightKg != null) parts.push(`weight ${p.weightKg} kg`);
-    if (p.pregnancyOrBreastfeeding === true) parts.push('pregnancy or breastfeeding: yes');
+    if (p.pregnant === 'yes') {
+      parts.push('pregnant: yes' + (p.pregnancyWeeks?.trim() ? `, ${p.pregnancyWeeks.trim()} weeks` : ''));
+    } else if (p.pregnant === 'no') parts.push('pregnant: no');
+    if (p.breastfeeding === 'yes') {
+      parts.push('breastfeeding: yes' + (p.breastfeedingDuration?.trim() ? `, ${p.breastfeedingDuration.trim()}` : ''));
+    } else if (p.breastfeeding === 'no') parts.push('breastfeeding: no');
+    if (p.pregnancyOrBreastfeeding === true && !parts.some((x) => x.startsWith('pregnant') || x.startsWith('breastfeeding')))
+      parts.push('pregnancy or breastfeeding: yes');
     if (parts.length > 0) lines.push(`User profile: ${parts.join('; ')}.`);
   }
   if (ctx.state) {

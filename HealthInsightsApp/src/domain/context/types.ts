@@ -37,7 +37,16 @@ export interface UserProfileBasic {
   sex?: 'male' | 'female' | 'other' | null;
   heightCm?: number | null;
   weightKg?: number | null;
+  /** True when user is pregnant and/or breastfeeding (for AI context). */
   pregnancyOrBreastfeeding?: boolean | null;
+  /** Are you pregnant? */
+  pregnant?: 'yes' | 'no' | null;
+  /** If pregnant, how many weeks (e.g. "12"). */
+  pregnancyWeeks?: string | null;
+  /** Are you breastfeeding? */
+  breastfeeding?: 'yes' | 'no' | null;
+  /** If breastfeeding, duration (e.g. "3 months"). */
+  breastfeedingDuration?: string | null;
 }
 
 /** Current state (how the person is at this time – can change often). */

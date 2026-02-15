@@ -1,169 +1,8 @@
-<<<<<<< HEAD
-import React from 'react';
-=======
-
 import React, { useState, useCallback, useEffect } from 'react';
->>>>>>> origin/walija
 import {
   View,
   Text,
   StyleSheet,
-<<<<<<< HEAD
-  TouchableOpacity,
-  TextInput,
-  ScrollView,
-  useColorScheme,
-} from 'react-native';
-import { useAppData } from '../context/AppDataContext';
-
-export function ProfileScreen() {
-  const isDark = useColorScheme() === 'dark';
-  const { profile, updateProfile } = useAppData();
-  const { pregnant, pregnancyWeeks, breastfeeding, breastfeedingDuration } = profile;
-
-  return (
-    <ScrollView
-      style={[styles.container, isDark && styles.bgDark]}
-      contentContainerStyle={styles.scrollContent}
-      keyboardShouldPersistTaps="handled"
-    >
-      <Text style={[styles.title, isDark && styles.textDark]}>Profile</Text>
-      <Text style={[styles.subtitle, isDark && styles.subtitleDark]}>
-        Health information for personalized insights
-      </Text>
-
-      {/* Pregnancy */}
-      <View style={[styles.section, isDark && styles.cardDark]}>
-        <Text style={[styles.sectionTitle, isDark && styles.textDark]}>
-          Are you pregnant?
-        </Text>
-        <View style={styles.yesNoRow}>
-          <TouchableOpacity
-            style={[
-              styles.optionButton,
-              pregnant === 'yes' && styles.optionSelected,
-              isDark && pregnant === 'yes' && styles.optionSelectedDark,
-            ]}
-            onPress={() => updateProfile({ pregnant: 'yes' })}
-          >
-            <Text
-              style={[
-                styles.optionText,
-                isDark && styles.textDark,
-                pregnant === 'yes' && styles.optionTextSelected,
-              ]}
-            >
-              Yes
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.optionButton,
-              pregnant === 'no' && styles.optionSelected,
-              isDark && pregnant === 'no' && styles.optionSelectedDark,
-            ]}
-            onPress={() => {
-              updateProfile({ pregnant: 'no', pregnancyWeeks: '' });
-            }}
-          >
-            <Text
-              style={[
-                styles.optionText,
-                isDark && styles.textDark,
-                pregnant === 'no' && styles.optionTextSelected,
-              ]}
-            >
-              No
-            </Text>
-          </TouchableOpacity>
-        </View>
-        {pregnant === 'yes' && (
-          <View style={styles.howLongRow}>
-            <Text style={[styles.howLongLabel, isDark && styles.textDark]}>
-              How long? (weeks)
-            </Text>
-            <TextInput
-              style={[
-                styles.input,
-                isDark && styles.inputDark,
-              ]}
-              value={pregnancyWeeks}
-              onChangeText={(text) => updateProfile({ pregnancyWeeks: text })}
-              placeholder="e.g. 12"
-              placeholderTextColor={isDark ? '#8e8e93' : '#999'}
-              keyboardType="number-pad"
-              maxLength={3}
-            />
-          </View>
-        )}
-      </View>
-
-      {/* Breastfeeding */}
-      <View style={[styles.section, isDark && styles.cardDark]}>
-        <Text style={[styles.sectionTitle, isDark && styles.textDark]}>
-          Are you breastfeeding?
-        </Text>
-        <View style={styles.yesNoRow}>
-          <TouchableOpacity
-            style={[
-              styles.optionButton,
-              breastfeeding === 'yes' && styles.optionSelected,
-              isDark && breastfeeding === 'yes' && styles.optionSelectedDark,
-            ]}
-            onPress={() => updateProfile({ breastfeeding: 'yes' })}
-          >
-            <Text
-              style={[
-                styles.optionText,
-                isDark && styles.textDark,
-                breastfeeding === 'yes' && styles.optionTextSelected,
-              ]}
-            >
-              Yes
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.optionButton,
-              breastfeeding === 'no' && styles.optionSelected,
-              isDark && breastfeeding === 'no' && styles.optionSelectedDark,
-            ]}
-            onPress={() => {
-              updateProfile({ breastfeeding: 'no', breastfeedingDuration: '' });
-            }}
-          >
-            <Text
-              style={[
-                styles.optionText,
-                isDark && styles.textDark,
-                breastfeeding === 'no' && styles.optionTextSelected,
-              ]}
-            >
-              No
-            </Text>
-          </TouchableOpacity>
-        </View>
-        {breastfeeding === 'yes' && (
-          <View style={styles.howLongRow}>
-            <Text style={[styles.howLongLabel, isDark && styles.textDark]}>
-              How long? (weeks or months)
-            </Text>
-            <TextInput
-              style={[
-                styles.input,
-                isDark && styles.inputDark,
-              ]}
-              value={breastfeedingDuration}
-              onChangeText={(text) => updateProfile({ breastfeedingDuration: text })}
-              placeholder="e.g. 3 months"
-              placeholderTextColor={isDark ? '#8e8e93' : '#999'}
-              keyboardType="default"
-            />
-          </View>
-        )}
-      </View>
-    </ScrollView>
-=======
   ScrollView,
   TextInput,
   TouchableOpacity,
@@ -254,7 +93,10 @@ export function ProfileScreen() {
   const [sex, setSex] = useState<SexOption>(null);
   const [heightCm, setHeightCm] = useState('');
   const [weightKg, setWeightKg] = useState('');
-  const [pregnancyOrBreastfeeding, setPregnancyOrBreastfeeding] = useState(false);
+  const [pregnant, setPregnant] = useState<'yes' | 'no' | null>(null);
+  const [pregnancyWeeks, setPregnancyWeeks] = useState('');
+  const [breastfeeding, setBreastfeeding] = useState<'yes' | 'no' | null>(null);
+  const [breastfeedingDuration, setBreastfeedingDuration] = useState('');
 
   // --- Medical ---
   const [medications, setMedications] = useState<MedicationEntry[]>([]);
@@ -281,7 +123,10 @@ export function ProfileScreen() {
     setSex(p.sex ?? null);
     setHeightCm(p.heightCm != null ? String(p.heightCm) : '');
     setWeightKg(p.weightKg != null ? String(p.weightKg) : '');
-    setPregnancyOrBreastfeeding(p.pregnancyOrBreastfeeding === true);
+    setPregnant(p.pregnant ?? null);
+    setPregnancyWeeks(p.pregnancyWeeks ?? '');
+    setBreastfeeding(p.breastfeeding ?? null);
+    setBreastfeedingDuration(p.breastfeedingDuration ?? '');
 
     setStressLevel(s.stressLevel ?? null);
     setOnPeriod(s.onPeriod === true);
@@ -319,7 +164,11 @@ export function ProfileScreen() {
       sex,
       heightCm: heightNum != null && !Number.isNaN(heightNum) ? heightNum : null,
       weightKg: weightNum != null && !Number.isNaN(weightNum) ? weightNum : null,
-      pregnancyOrBreastfeeding: pregnancyOrBreastfeeding || undefined,
+      pregnant: pregnant ?? undefined,
+      pregnancyWeeks: pregnancyWeeks.trim() || undefined,
+      breastfeeding: breastfeeding ?? undefined,
+      breastfeedingDuration: breastfeedingDuration.trim() || undefined,
+      pregnancyOrBreastfeeding: pregnant === 'yes' || breastfeeding === 'yes',
     });
 
     setAllergies(parseList(allergiesText));
@@ -337,7 +186,10 @@ export function ProfileScreen() {
     sex,
     heightCm,
     weightKg,
-    pregnancyOrBreastfeeding,
+    pregnant,
+    pregnancyWeeks,
+    breastfeeding,
+    breastfeedingDuration,
     allergiesText,
     intolerancesText,
   ]);
@@ -520,15 +372,72 @@ export function ProfileScreen() {
           placeholderTextColor="#78716c"
           keyboardType="decimal-pad"
         />
-        <View style={styles.switchRow}>
-          <Text style={styles.switchLabel}>Pregnancy or breastfeeding</Text>
-          <Switch
-            value={pregnancyOrBreastfeeding}
-            onValueChange={setPregnancyOrBreastfeeding}
-            trackColor={{ false: '#d6d3d1', true: '#a8a29e' }}
-            thumbColor={pregnancyOrBreastfeeding ? '#5a4a3a' : '#f5f5f4'}
-          />
+
+        <SectionHeader title="Pregnancy" />
+        <Text style={styles.label}>Are you pregnant?</Text>
+        <View style={styles.chipRow}>
+          <TouchableOpacity
+            style={[styles.chip, pregnant === 'yes' && styles.chipActive]}
+            onPress={() => setPregnant('yes')}
+          >
+            <Text style={[styles.chipText, pregnant === 'yes' && styles.chipTextActive]}>Yes</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.chip, pregnant === 'no' && styles.chipActive]}
+            onPress={() => {
+              setPregnant('no');
+              setPregnancyWeeks('');
+            }}
+          >
+            <Text style={[styles.chipText, pregnant === 'no' && styles.chipTextActive]}>No</Text>
+          </TouchableOpacity>
         </View>
+        {pregnant === 'yes' && (
+          <>
+            <Text style={styles.label}>How long? (weeks)</Text>
+            <TextInput
+              style={styles.input}
+              value={pregnancyWeeks}
+              onChangeText={setPregnancyWeeks}
+              placeholder="e.g. 12"
+              placeholderTextColor="#78716c"
+              keyboardType="number-pad"
+              maxLength={3}
+            />
+          </>
+        )}
+
+        <SectionHeader title="Breastfeeding" />
+        <Text style={styles.label}>Are you breastfeeding?</Text>
+        <View style={styles.chipRow}>
+          <TouchableOpacity
+            style={[styles.chip, breastfeeding === 'yes' && styles.chipActive]}
+            onPress={() => setBreastfeeding('yes')}
+          >
+            <Text style={[styles.chipText, breastfeeding === 'yes' && styles.chipTextActive]}>Yes</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.chip, breastfeeding === 'no' && styles.chipActive]}
+            onPress={() => {
+              setBreastfeeding('no');
+              setBreastfeedingDuration('');
+            }}
+          >
+            <Text style={[styles.chipText, breastfeeding === 'no' && styles.chipTextActive]}>No</Text>
+          </TouchableOpacity>
+        </View>
+        {breastfeeding === 'yes' && (
+          <>
+            <Text style={styles.label}>How long? (weeks or months)</Text>
+            <TextInput
+              style={styles.input}
+              value={breastfeedingDuration}
+              onChangeText={setBreastfeedingDuration}
+              placeholder="e.g. 3 months"
+              placeholderTextColor="#78716c"
+            />
+          </>
+        )}
 
         <SectionHeader title="Medical info" />
         <Text style={styles.label}>Medications (name, when you take it, start date)</Text>
@@ -663,95 +572,10 @@ export function ProfileScreen() {
         </TouchableOpacity>
       </ScrollView>
     </AuroraBlobBackground>
->>>>>>> origin/walija
   );
 }
 
 const styles = StyleSheet.create({
-<<<<<<< HEAD
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  bgDark: {
-    backgroundColor: '#1c1c1e',
-  },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#000',
-    marginTop: 16,
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: '#666',
-    marginBottom: 24,
-  },
-  subtitleDark: {
-    color: '#8e8e93',
-  },
-  textDark: {
-    color: '#e5e5ea',
-  },
-  section: {
-    backgroundColor: '#f2f2f7',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-  cardDark: {
-    backgroundColor: '#2c2c2e',
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#000',
-    marginBottom: 12,
-  },
-  yesNoRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  optionButton: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  optionSelected: {
-    backgroundColor: 'rgba(0, 122, 255, 0.12)',
-    borderColor: '#007AFF',
-  },
-  optionSelectedDark: {
-    backgroundColor: 'rgba(10, 132, 255, 0.2)',
-    borderColor: '#0a84ff',
-  },
-  optionText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000',
-  },
-  optionTextSelected: {
-    color: '#007AFF',
-  },
-  howLongRow: {
-    marginTop: 16,
-  },
-  howLongLabel: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#000',
-    marginBottom: 8,
-=======
   gradient: { flex: 1 },
   paperTint: {
     ...StyleSheet.absoluteFillObject,
@@ -777,25 +601,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#292524',
     marginBottom: 6,
->>>>>>> origin/walija
   },
   input: {
     backgroundColor: '#fff',
     borderRadius: 10,
-<<<<<<< HEAD
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    color: '#000',
-    borderWidth: 1,
-    borderColor: '#c7c7cc',
-  },
-  inputDark: {
-    backgroundColor: '#3a3a3c',
-    color: '#e5e5ea',
-    borderColor: '#48484a',
-  },
-=======
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
@@ -872,5 +681,4 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   saveBtnText: { fontSize: 16, fontWeight: '600', color: '#fef08a' },
->>>>>>> origin/walija
 });
