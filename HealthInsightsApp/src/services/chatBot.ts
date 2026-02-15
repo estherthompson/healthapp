@@ -22,6 +22,7 @@ const HOW_ARE_YOU_INPUTS = [
   'how are you', 'how are you doing', 'how\'s it going', 'how goes it',
   'how do you do', 'how have you been', 'you good', 'are you ok',
   'what\'s up', 'how is it going', 'how are things', 'how ya doing',
+  'how u', 'how r u', 'howru', 'how are u',
 ];
 
 const HOW_ARE_YOU_REPLIES = [
@@ -48,6 +49,13 @@ function matchesAny(input: string, phrases: string[]): boolean {
     const p = normalize(phrase);
     return n === p || n.startsWith(p + ' ') || n.endsWith(' ' + p) || n.includes(' ' + p + ' ');
   });
+}
+
+/** True if the message is a simple greeting or "how are you" (so we can reply without full symptom pipeline). */
+export function isSimpleGreeting(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+  return matchesAny(trimmed, GREETING_INPUTS) || matchesAny(trimmed, HOW_ARE_YOU_INPUTS);
 }
 
 function getLocalReply(userMessage: string): string {

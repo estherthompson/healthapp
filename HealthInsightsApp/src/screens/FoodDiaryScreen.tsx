@@ -1,0 +1,419 @@
+import React, { useState, useCallback, useMemo } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  TouchableOpacity,
+  Alert,
+  TextInput,
+  Modal,
+} from 'react-native';
+import {
+  launchImageLibrary,
+  launchCamera,
+} from 'react-native-image-picker';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { AuroraBlobBackground } from '../components/AuroraBlobBackground';
+import {
+  getDishes,
+  recognizeFoodImage,
+  type LogMealDishesResponse,
+  type LogMealDishItem,
+} from '../services/logmealApi';
+import {
+  getEntriesByMealForDate,
+  addEntry,
+  addEntries,
+  removeEntry,
+  getTodayTotalPortion,
+  type MealType,
+  type FoodLogEntry,
+} from '../storage/foodLogStore';
+
+const MEALS: { key: MealType; label: string; icon: string }[] = [
+  { key: 'breakfast', label: 'Breakfast', icon: 'sunny-outline' },
+  { key: 'lunch', label: 'Lunch', icon: 'restaurant-outline' },
+  { key: 'dinner', label: 'Dinner', icon: 'moon-outline' },
+  { key: 'snacks', label: 'Snacks', icon: 'cafe-outline' },
+];
+
+function todayStr(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function formatToday(): string {
+  const d = new Date();
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  return `${days[d.getDay()]}, ${d.getDate()} ${d.toLocaleString('default', { month: 'short' })}`;
+}
+
+const CATEGORY_KEYS = ['food', 'drinks', 'ingredients', 'sauces', 'combo', 'customRecipe'] as const;
+
+function flattenDishes(data: LogMealDishesResponse): LogMealDishItem[] {
+  const out: LogMealDishItem[] = [];
+  CATEGORY_KEYS.forEach((key) => {
+    (data[key] ?? []).forEach((item) => out.push(item));
+  });
+  return out;
+}
+
+const EMPTY_BY_MEAL: Record<MealType, FoodLogEntry[]> = {
+  breakfast: [],
+  lunch: [],
+  dinner: [],
+  snacks: [],
+};
+
+export function FoodDiaryScreen() {
+  const [entriesVersion, setEntriesVersion] = useState(0);
+  const [byMeal, setByMeal] = useState<Record<MealType, FoodLogEntry[]>>(EMPTY_BY_MEAL);
+  const [totalPortion, setTotalPortion] = useState(0);
+  const [logLoading, setLogLoading] = useState(true);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLogLoading(true);
+      const [mealData, total] = await Promise.all([
+        getEntriesByMealForDate(todayStr()),
+        getTodayTotalPortion(),
+      ]);
+      if (!cancelled) {
+        setByMeal(mealData);
+        setTotalPortion(total);
+      }
+      setLogLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [entriesVersion]);
+
+  const totalItems = Object.values(byMeal).reduce((n, arr) => n + arr.length, 0);
+
+  const [scanLoading, setScanLoading] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [searchModalVisible, setSearchModalVisible] = useState(false);
+  const [addToMeal, setAddToMeal] = useState<MealType | null>(null);
+  const [data, setData] = useState<LogMealDishesResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  const refreshLog = useCallback(() => setEntriesVersion((v) => v + 1), []);
+
+  const loadDishes = useCallback(async () => {
+    if (data) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await getDishes({ language: 'eng', cookingMeasures: true });
+      setData(result);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load dishes');
+    } finally {
+      setLoading(false);
+    }
+  }, [data]);
+
+  const runScanAndAddToMeal = useCallback(async (meal: MealType, fromLibrary: boolean = false) => {
+    const launcher = fromLibrary ? launchImageLibrary : launchCamera;
+    if (typeof launcher !== 'function') {
+      Alert.alert(
+        'Not available',
+        'Camera or gallery is not linked. Rebuild the app after running "pod install" in the ios folder.'
+      );
+      return;
+    }
+    const result = await launcher({ mediaType: 'photo', selectionLimit: 1, saveToPhotos: false });
+    if (result.didCancel || !result.assets?.[0]?.uri) return;
+    setScanLoading(true);
+    setScanError(null);
+    try {
+      const apiResult = await recognizeFoodImage(result.assets[0].uri, { language: 'eng' });
+      const items = (apiResult.segmentation_results ?? [])
+        .map((seg) => seg.recognition_results?.[0])
+        .filter(Boolean)
+        .map((r) => ({ name: r!.name, portion_g: Math.round(200 * (r!.prob || 0.5)) || 100 }));
+      if (items.length > 0) {
+        await addEntries(meal, items);
+        refreshLog();
+      } else setScanError('No food detected');
+    } catch (e) {
+      setScanError(e instanceof Error ? e.message : 'Scan failed');
+    } finally {
+      setScanLoading(false);
+    }
+  }, [refreshLog]);
+
+  const openScanThenChooseMeal = useCallback((meal: MealType) => {
+    Alert.alert('Scan meal', 'Take a photo or choose from gallery', [
+      { text: 'Take photo', onPress: () => runScanAndAddToMeal(meal, false) },
+      { text: 'Choose from gallery', onPress: () => runScanAndAddToMeal(meal, true) },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  }, [runScanAndAddToMeal]);
+
+  const openSearchThenChooseMeal = useCallback((meal: MealType) => {
+    setAddToMeal(meal);
+    setSearchModalVisible(true);
+    setSearchQuery('');
+    loadDishes();
+  }, [loadDishes]);
+
+  const showAddOptions = useCallback((meal: MealType) => {
+    Alert.alert('Add to ' + meal, 'How do you want to add food?', [
+      { text: 'Scan meal', onPress: () => openScanThenChooseMeal(meal) },
+      { text: 'Search dish', onPress: () => openSearchThenChooseMeal(meal) },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  }, [openScanThenChooseMeal, openSearchThenChooseMeal]);
+
+  const addDishToMeal = useCallback(async (meal: MealType, name: string, portion_g: number) => {
+    await addEntry({ meal, name, portion_g });
+    refreshLog();
+    setSearchModalVisible(false);
+    setAddToMeal(null);
+  }, [refreshLog]);
+
+  const handleRemoveEntry = useCallback((entry: FoodLogEntry) => {
+    Alert.alert('Remove item', `Remove "${entry.name}" from ${entry.meal}?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: async () => {
+          await removeEntry(entry.id);
+          refreshLog();
+        },
+      },
+    ]);
+  }, [refreshLog]);
+
+  const flatDishes = useMemo(() => (data ? flattenDishes(data) : []), [data]);
+  const query = searchQuery.trim().toLowerCase();
+  const filteredDishes = useMemo(
+    () => (query ? flatDishes.filter((d) => d.name.toLowerCase().includes(query)) : flatDishes.slice(0, 100)),
+    [flatDishes, query]
+  );
+
+  return (
+    <AuroraBlobBackground style={styles.gradient}>
+      <View style={styles.paperTint} pointerEvents="none" />
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text style={styles.title}>Food Diary</Text>
+        <Text style={styles.dateLabel}>{formatToday()}</Text>
+        {(totalItems > 0 || totalPortion > 0) && (
+          <Text style={styles.summary}>
+            {totalItems} item{totalItems !== 1 ? 's' : ''} · {totalPortion}g logged
+          </Text>
+        )}
+
+        {scanLoading && (
+          <View style={styles.loadingBar}>
+            <ActivityIndicator size="small" color="#5a4a3a" />
+            <Text style={styles.loadingBarText}>Scanning…</Text>
+          </View>
+        )}
+        {scanError && <Text style={styles.scanErrorText}>{scanError}</Text>}
+
+        {logLoading && (
+          <View style={styles.loadingBar}>
+            <ActivityIndicator size="small" color="#5a4a3a" />
+            <Text style={styles.loadingBarText}>Loading diary…</Text>
+          </View>
+        )}
+
+        {!logLoading && MEALS.map(({ key, label, icon }) => (
+          <View key={key} style={styles.mealCard}>
+            <View style={styles.mealHeader}>
+              <Ionicons name={icon as any} size={20} color="#292524" />
+              <Text style={styles.mealTitle}>{label}</Text>
+              <TouchableOpacity
+                style={styles.addBtn}
+                onPress={() => showAddOptions(key)}
+                disabled={scanLoading}
+              >
+                <Ionicons name="add-circle" size={24} color="#ea580c" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.mealList}>
+              {byMeal[key].length === 0 ? (
+                <Text style={styles.emptyMeal}>No items yet</Text>
+              ) : (
+                byMeal[key].map((entry) => (
+                  <TouchableOpacity
+                    key={entry.id}
+                    style={styles.logRow}
+                    onPress={() => handleRemoveEntry(entry)}
+                    onLongPress={() => handleRemoveEntry(entry)}
+                  >
+                    <Text style={styles.logName} numberOfLines={1}>{entry.name}</Text>
+                    <Text style={styles.logPortion}>{entry.portion_g}g</Text>
+                  </TouchableOpacity>
+                ))
+              )}
+            </View>
+          </View>
+        ))}
+
+        <View style={styles.bottomPad} />
+      </ScrollView>
+
+      <Modal
+        visible={searchModalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => { setSearchModalVisible(false); setAddToMeal(null); }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Search dish</Text>
+              <TouchableOpacity onPress={() => { setSearchModalVisible(false); setAddToMeal(null); }}>
+                <Ionicons name="close" size={28} color="#292524" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.searchRow}>
+              <Ionicons name="search" size={20} color="#78716c" style={styles.searchIcon} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search…"
+                placeholderTextColor="#a8a29e"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoFocus
+              />
+            </View>
+            {loading && (
+              <View style={styles.loadingRow}>
+                <ActivityIndicator size="small" color="#5a4a3a" />
+                <Text style={styles.loadingRowText}>Loading…</Text>
+              </View>
+            )}
+            {error && <Text style={styles.errorText}>{error}</Text>}
+            <ScrollView style={styles.modalList} keyboardShouldPersistTaps="handled">
+              {filteredDishes.map((item) => (
+                <TouchableOpacity
+                  key={`${item.id}-${item.name}`}
+                  style={styles.dishRow}
+                  onPress={() => {
+                    if (addToMeal) addDishToMeal(addToMeal, item.name, item.portion_size);
+                  }}
+                >
+                  <Text style={styles.dishName} numberOfLines={1}>{item.name}</Text>
+                  <Text style={styles.portionSize}>{item.portion_size}g</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+    </AuroraBlobBackground>
+  );
+}
+
+const styles = StyleSheet.create({
+  gradient: { flex: 1 },
+  paperTint: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,250,240,0.12)',
+  },
+  scroll: { flex: 1 },
+  scrollContent: { paddingHorizontal: 24, paddingTop: 12, paddingBottom: 24 },
+  title: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: '#292524',
+    marginBottom: 4,
+    letterSpacing: 0.3,
+  },
+  dateLabel: { fontSize: 15, color: '#57534e', marginBottom: 2 },
+  summary: { fontSize: 13, color: '#78716c', marginBottom: 20 },
+  loadingBar: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  loadingBarText: { fontSize: 14, color: '#57534e' },
+  scanErrorText: { fontSize: 13, color: '#991b1b', marginBottom: 12 },
+  mealCard: {
+    backgroundColor: 'rgba(255,255,255,0.65)',
+    borderRadius: 14,
+    marginBottom: 14,
+    overflow: 'hidden',
+  },
+  mealHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0,0,0,0.08)',
+  },
+  mealTitle: { fontSize: 17, fontWeight: '600', color: '#292524', marginLeft: 8, flex: 1 },
+  addBtn: { padding: 4 },
+  mealList: { paddingHorizontal: 14, paddingVertical: 8 },
+  emptyMeal: { fontSize: 14, color: '#a8a29e', paddingVertical: 8 },
+  logRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0,0,0,0.06)',
+  },
+  logName: { fontSize: 15, color: '#292524', flex: 1, marginRight: 8 },
+  logPortion: { fontSize: 13, color: '#78716c' },
+  bottomPad: { height: 24 },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fefce8',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '80%',
+    paddingBottom: 24,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  modalTitle: { fontSize: 18, fontWeight: '600', color: '#292524' },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    marginHorizontal: 20,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 12,
+  },
+  searchIcon: { marginRight: 8 },
+  searchInput: { flex: 1, fontSize: 16, color: '#292524', paddingVertical: 0 },
+  loadingRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingVertical: 8 },
+  loadingRowText: { fontSize: 14, color: '#57534e' },
+  errorText: { fontSize: 14, color: '#991b1b', paddingHorizontal: 20, marginBottom: 8 },
+  modalList: { maxHeight: 360, paddingHorizontal: 20 },
+  dishRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  dishName: { fontSize: 15, color: '#292524', flex: 1, marginRight: 8 },
+  portionSize: { fontSize: 13, color: '#78716c' },
+});

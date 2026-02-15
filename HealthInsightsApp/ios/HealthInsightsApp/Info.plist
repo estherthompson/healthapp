@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>HealthInsightsApp</string>
+	<string>BloomAi</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -34,9 +34,13 @@
 		<true/>
 	</dict>
 	<key>NSHealthShareUsageDescription</key>
-	<string>Health Insights uses your step count to show activity and provide wellness insights.</string>
+	<string>BloomAi uses your health data (steps, distance, activity, sleep, heart rate, and more) to show activity and provide wellness insights.</string>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string>Health Insights uses your health data to provide personalized wellness insights.</string>
+	<string>BloomAi uses your health data to provide personalized wellness insights.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>BloomAi uses the camera to scan your meal for food recognition.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>BloomAi needs photo access to scan meal images for food recognition.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
 	<key>RCTNewArchEnabled</key>
@@ -57,6 +61,12 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+	</array>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Ionicons.ttf</string>
+		<string>MaterialIcons.ttf</string>
+		<string>MaterialCommunityIcons.ttf</string>
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
