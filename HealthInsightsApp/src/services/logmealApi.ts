@@ -83,12 +83,14 @@ export async function getDishes(options?: GetDishesOptions): Promise<LogMealDish
  * Sends a food image to LogMeal for recognition (scan meal).
  * Uses APIUser token (userApiKey) if set, else company apiKey.
  * Returns detected food regions and top dish matches.
+ * The image must be smaller than 1MB; use a resized/compressed URI (e.g. from picker with maxWidth/maxHeight/quality).
  */
 export async function recognizeFoodImage(
   imageUri: string,
   options?: { language?: LogMealLanguage }
 ): Promise<LogMealRecognitionResponse> {
   const { baseUrl, apiKey, userApiKey } = LOGMEAL_CONFIG;
+  // Scan endpoint requires API User token; prefer userApiKey over company apiKey
   const token = (userApiKey && !userApiKey.startsWith('YOUR_')) ? userApiKey : apiKey;
   if (!token || token.startsWith('YOUR_LOGMEAL_')) {
     throw new Error('LogMeal API key not set. Add your key in src/config/logmeal.ts (apiKey or userApiKey).');
@@ -116,6 +118,13 @@ export async function recognizeFoodImage(
 
   if (!res.ok) {
     const text = await res.text();
+    if (res.status === 401 && /user not allowed|APIUser|admin/i.test(text)) {
+      throw new Error(
+        'Scan meal requires an API User token from LogMeal (not the company key). ' +
+        'In LogMeal dashboard create an API User and set its token as userApiKey in src/config/logmeal.ts. ' +
+        'See https://logmeal.com/api/user-types/'
+      );
+    }
     throw new Error(`LogMeal API error ${res.status}: ${text || res.statusText}`);
   }
 

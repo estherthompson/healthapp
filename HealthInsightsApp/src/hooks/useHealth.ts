@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { AppState, type AppStateStatus } from 'react-native';
 import {
   checkAvailability,
   getAuthorizationStatus,
@@ -24,6 +25,7 @@ export function useHealth() {
   const [status, setStatus] = useState<HealthStatus>('unknown');
   const [available, setAvailable] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
+  const appState = useRef(AppState.currentState);
 
   const refreshMetrics = useCallback(async () => {
     const [
@@ -60,6 +62,7 @@ export function useHealth() {
     setLoading(false);
   }, [refreshMetrics]);
 
+  // Initial load: check availability, auth status; auto-request permission if not yet requested
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -76,6 +79,12 @@ export function useHealth() {
       setStatus(authStatus);
       if (authStatus === 'authorized') {
         await refreshMetrics();
+      } else if (authStatus === 'not_requested') {
+        setLoading(true);
+        const newStatus = await requestPermissions();
+        if (cancelled) return;
+        setStatus(newStatus);
+        if (newStatus === 'authorized') await refreshMetrics();
       }
       if (cancelled) return;
       setLoading(false);
@@ -83,6 +92,23 @@ export function useHealth() {
     return () => {
       cancelled = true;
     };
+  }, [refreshMetrics]);
+
+  // Auto-refresh when app comes to foreground: re-check auth (in case user enabled in Settings) and refresh metrics
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', async (nextState: AppStateStatus) => {
+      if (appState.current === 'background' && nextState === 'active') {
+        appState.current = nextState;
+        const isAvailable = await checkAvailability();
+        if (!isAvailable) return;
+        const authStatus = await getAuthorizationStatus();
+        setStatus(authStatus);
+        if (authStatus === 'authorized') await refreshMetrics();
+      } else {
+        appState.current = nextState;
+      }
+    });
+    return () => sub.remove();
   }, [refreshMetrics]);
 
   return {
