@@ -65,7 +65,11 @@ function App() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    loadProfileStore().then(() => setReady(true));
+    if (typeof loadProfileStore === 'function') {
+      loadProfileStore().then(() => setReady(true));
+    } else {
+      setReady(true);
+    }
   }, []);
 
   if (!ready) {
